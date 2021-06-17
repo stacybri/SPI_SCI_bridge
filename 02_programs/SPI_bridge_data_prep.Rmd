@@ -1,0 +1,590 @@
+---
+title: 'Bridge between the SPI and the SCI'
+author: "Brian Stacy"
+date: "`r Sys.Date()`"
+output: bookdown::gitbook
+output_dir: "`r paste0(here::here(),'/docs')`"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE, fig.height=7, fig.width=10)
+
+library(tidyverse)
+library(here)
+# devtools::install_github("worldbank/wbgviz", subdir = "wbgdata")
+# devtools::install_github("worldbank/wbgviz", subdir = "wbgcharts")
+# devtools::install_github("worldbank/wbgviz", subdir = "wbggeo")
+# devtools::install_github("worldbank/wbgviz", subdir = "wbgmaps")
+# library(wbggeo)
+# library(wbgmaps)
+library(ggthemes)
+library(Hmisc)
+library(httr)
+library(patchwork)
+library(ggrepel)
+library(lubridate)
+library(haven)
+library(cld2)
+library(zoo)
+library(readxl)
+library(flextable)
+#set directories
+dir <- here()
+
+raw_dir <- paste(dir, '01_raw_data', sep="/")
+output_dir <- paste(dir, '03_output_data', sep="/")
+
+#parameters
+window=5 #set the window for the moving averages
+
+```
+
+```{r spi_df}
+
+# This block of code will create a blank SPI dataset (only containing country info) that will be appended to when each indicator is added.
+# There will be two indicators added for each dimension
+# 1. An indicator with a score between 0-1 for each dimension
+# 2. An indicator with the raw (unscored) values of the indicators
+# The unit for this database will be country*year
+
+span <- c(2015:2019)
+
+spi_df_empty <- bind_rows(replicate(length(span), wbstats::wbcountries(), simplify = FALSE), .id='date') %>%
+  mutate(date=as.numeric(date)+span[1]-1) %>%
+  filter(region!="Aggregates") # take out the aggregates (LAC, SAR, etc)
+
+spi_df <- spi_df_empty
+
+#read list of iso3c codes for matching from UN (https://unstats.un.org/unsd/methodology/m49/)
+iso3c <- read_csv(paste(raw_dir,'metadata/iso_codes.csv', sep="/"),
+                  col_types=list(col_character(), col_character(), col_character()))
+
+```
+
+```{r programs, include=FALSE}
+
+
+#For mapping the result
+# quality = "high"
+# maps <- wbgmaps::wbgmaps[[quality]]
+#load world bank map data
+load(paste0(raw_dir, '/misc/maps.Rdata'))
+standard_crop_wintri <- function() {
+  l <- list(
+    left=-12000000, right=16396891,
+    top=9400000, bottom=-6500000
+  )
+  l$xlim <- c(l$left, l$right)
+  l$ylim <- c(l$bottom, l$top)
+  l
+}
+
+country_metadata <- wbstats::wbcountries()
+
+
+
+spi_mapper  <- function(data, indicator, title) {
+  
+ indicator<-indicator
+
+  map_df <- get(data) %>%
+    filter(date==max(date, na.rm=T)) %>%
+    filter(!(country %in% c('Greenland'))) %>% #drop a few countries for which we do not collect data.
+    group_by( country) %>%
+    #summarise(across(!! indicator,last)) %>%
+    rename(data_available=!! indicator) %>%
+    right_join(country_metadata) %>%
+    mutate(data_available=if_else(is.na(data_available), as.numeric(NA), as.numeric(data_available)))    
+  
+  
+   p1 <- ggplot() +
+    geom_map(data = map_df, aes(map_id = iso3c, fill = 100*data_available), map = maps$countries) + 
+    geom_polygon(data = maps$disputed, aes(long, lat, group = group, map_id = id), fill = "grey80") + 
+    geom_polygon(data = maps$lakes, aes(long, lat, group = group), fill = "white")  +
+     geom_path(data = maps$boundaries,
+               aes(long, lat, group = group),
+               color = "white",
+               size = 0.3,
+               lineend = maps$boundaries$lineend,
+              linetype = maps$boundaries$linetype) +
+    scale_x_continuous(expand = c(0, 0), limits = standard_crop_wintri()$xlim) +
+    scale_y_continuous(expand = c(0, 0), limits = standard_crop_wintri()$ylim) +
+  scale_fill_distiller(palette = "RdYlGn",
+                       direction=1,
+                       limits = c(0,100))  +
+    coord_equal() +
+    theme_map(base_size=12) +
+    labs(
+      title=str_wrap(title,100),
+      subtitle= 'Data Point is for last year available (usually 2019)',
+      caption = 'Source: SPI Indicator.',
+      fill='SPI Indicator Value'
+    )
+  
+  #add histogram by region 
+  p2 <- map_df %>%
+    group_by(region) %>%
+    filter(region!='Aggregates') %>%
+    mutate(Percentage=100*mean(data_available, na.rm=T),
+           Label = paste(round(Percentage,0))) %>%
+    ggplot(aes(x=Percentage, y=region, fill=region)) +
+      geom_bar(stat="identity",position='dodge') +
+      geom_text(aes(label=Label)) +
+      labs(
+      title=str_wrap(paste(title, 'By Region', sep=" - "),100),
+      caption = 'Source: SPI Indicators Raw Data',
+      subtitle= 'Data Point is for last year available (usually 2019)'
+      ) +
+      expand_limits(x=c(0,100)) +
+      theme_bw()
+
+  #by income
+    p3 <- map_df %>%
+    group_by(income) %>%
+    filter(region!='Aggregates') %>%
+    mutate(Percentage=100*mean(data_available, na.rm=T),
+           Label = paste(round(Percentage,0))) %>%
+    ggplot(aes(x=Percentage, y=income, fill=income)) +
+      geom_bar(stat="identity",position='dodge') +
+      geom_text(aes(label=Label)) +
+      labs(
+      title=str_wrap(paste(title, 'By Income', sep=" - "),100),
+      caption = 'Source: SPI Indicators Raw Data',
+      subtitle= 'Data Point is for last year available (usually 2019)'
+      ) +
+      expand_limits(x=c(0,100)) +
+      theme_bw()
+    
+  # #add line graph over time
+  p4 <- get(data)  %>%
+    rename(data_available=!! indicator) %>%
+    # right_join(spi_df_empty) %>%
+    group_by( date) %>%
+    mutate(data_available=if_else(is.na(data_available), as.numeric(NA), as.numeric(data_available))) %>%
+    mutate(Percentage=100*mean(data_available),
+           Label = paste(round(Percentage,0))) %>%
+    ungroup() %>%
+    ggplot(aes(y=Percentage, x=date)) +
+      geom_point() +
+      geom_line(fill='blue') +
+      # geom_text_repel(aes(label=Label)) +
+      labs(
+      title=str_wrap(paste(title, 'By Date', sep=" - "),100),
+      caption = 'Source: SPI Indicators Raw Data'
+      ) +
+      expand_limits(y=c(0,100)) +
+      theme_bw()
+      
+  print(p1)
+  
+  print(p2)
+  
+  print(p3)
+
+  print(p4)
+    
+}
+
+
+#define function to pull data from UN Stats and return
+un_pull <- function(series,start, end) {
+  # jsonlite::fromJSON(paste('https://unstats.un.org/SDGAPI/v1/sdg/Series/Data?seriesCode=',series,'&timePeriodStart=',start,'&timePeriodEnd=',end,'&pageSize=10000',sep=""), flatten = TRUE)$data %>%
+      jsonlite::fromJSON(paste('https://unstats.un.org/SDGAPI/v1/sdg/Series/Data?seriesCode=',series,'&pageSize=10000',sep=""), flatten = TRUE)$data %>%
+
+    as_tibble() %>%
+    mutate(date=timePeriodStart) %>%
+    right_join(iso3c)
+    
+}  
+
+
+
+```
+
+
+
+
+
+## Introduction
+
+This document contains a detailed technical description of the bridge between the Statistical Performance Indicators (SPI) and the Statistical Capacity Indicator (SCI).  The document contains a detailed description of each indicator, as well as the R code used to construct each indicator.
+
+The Statistical Capacity Indicator (SCI) Country Dashboards provide individual country scores for the overall SCI average as well as for the 3 categories, i.e. Methodology, Source Data, and Periodicity. 
+
+In the remainder of the document, a bridge index will be created that produces a version closely matching the SCI using the SPI data.
+
+
+## Methodology
+
+There are 10 indicators under the methodology dimension:    
+  * Balance of payments manual in use   
+  * Consumer price index base year    
+  * External debt reporting stats   
+  * Government finance accounting   
+  * Import and export price indexes   
+  * Industrial production index   
+  * National accounts base year   
+  * National immunization coverage    
+  * Special Data Dissemination Standard   
+  * UNESCO reporting
+
+These will be recreated in turn.
+
+```{r metadata_pull}
+# pull in some WDI metadata which will be used for constructing AKI indicators.
+# WDI metadata was gathered using previous vintages of WDI from 2016-19
+# Metadata was gathered and saved as csv files in the 011_data folder
+for (i in 2016:2019) {
+  temp <- read_csv(file = paste(raw_dir, "/metadata/WDI_metadata_",i,".csv", sep="" )) %>%
+    as_tibble(.name_repair='universal') %>%
+    mutate(National.accounts.reference.year=as.numeric(National.accounts.reference.year),
+           date=i)
+  
+    assign(paste("WDI_metadata",i,sep="_"), temp)
+}
+WDI_metadata <- bind_rows(WDI_metadata_2016, WDI_metadata_2017, WDI_metadata_2018, WDI_metadata_2019)
+```
+
+```{r standards_meta}
+
+#pull data for several of the standards from WDI metadata
+
+df <- WDI_metadata
+
+# Manipulate and clean final data
+df <- df %>%
+  filter(!is.na(Income.Group))  #keep just countries (drop aggregations)
+
+#pull IMF country codes for merging
+imf_codes <- read_csv(file=paste(raw_dir, "metadata","IMF_country_codes.csv", sep="/" ))
+
+```
+
+### Balance of payments manual in use
+
+The Balance of Payments Manual serves as an international standard for the compilation of balance of payments statistics. The manual has evolved to meet changing economic and financial environment and analytic requirements. The first edition was published in 1948 and successive editions in 1950, 1961, 1977 and 1993. Score is 1 for countries adopting the latest edition (BPM5); otherwise, 0.
+
+This data is gathered from the WDI metadata.
+```{r bpm}
+
+bpm_df <- WDI_metadata %>%
+  transmute(
+    iso3c=Country.Code,
+    date=date,
+    BPM_raw = Balance.of.Payments.Manual.in.use
+  ) %>%
+  mutate(SCI.MTHD.BPM=case_when(
+    BPM_raw=="IMF Balance of Payments Manual, 6th edition." ~ 1,
+    BPM_raw=="BPM5 (Converted into BPM6 by IMF)" ~ 1,
+    BPM_raw=="BPM6" ~ 1,
+    TRUE ~ 0
+  ))
+
+spi_df <- spi_df %>%
+  left_join(bpm_df)
+
+```
+
+
+### Consumer price index base year    
+
+Consumer Price Index serves as indicators of inflation and reflects changes in the cost of acquiring a fixed basket of goods and services by the average consumer. Weights are usually derived from consumer expenditure surveys and the CPI base year refers to the year the weights were derived. It is recommended that the base year be changed periodically to reflect changes in expenditure structure. Score is 1 if the base year is within the last 10 years; otherwise, 0.
+
+```{r cpiby}
+
+#read in csv file.
+D5.2.4.CPIBY <- read_csv(file = paste(raw_dir, "5.2_DISM","D5.2.4.CPIBY.csv", sep="/" )) %>%
+  mutate(SPI.D5.2.4.CPIBY=case_when(
+    CPIBY=="annual chained" ~ 1, 
+    (date-as.numeric(CPIBY))<=10 ~ 1, #within 10 years of reference period
+    TRUE ~ 0 
+  ),
+  RAW.D5.2.4.CPIBY=CPIBY)  %>%
+  select(iso3c, country, date, RAW.D5.2.4.CPIBY, SPI.D5.2.4.CPIBY  ) %>%
+  arrange(date, country)
+
+#####
+# IMF Data
+#####
+
+#use alternative data source provided by the IMF
+
+#read in data on when the weights were last updated to measure if annual chain linking is done
+D5.2.4.COICOP.WGT <-   read_excel(path=paste(raw_dir, "5.2_DISM","2020.11.04_Compiled Data for World Bank.xlsx", sep="/" ),
+                               sheet = "COICOP Month_Last Change",
+                               skip=2
+                               ) %>%
+  as_tibble(.name_repair='universal') %>%  
+  rename(
+    IMF_code=Code,
+    IMF_country=Country_revised
+  ) %>%
+  mutate(IMF_code=as.numeric(IMF_code)) %>%
+  left_join(imf_codes)
+  
+  
+#read in last time the CPI reference period is updated to fill in rest of info  
+D5.2.4.CPI.REF <-  read_excel(path=paste(raw_dir, "5.2_DISM","2020.11.04_Compiled Data for World Bank.xlsx", sep="/" ),
+                               sheet = "CPI Reference Period Review"
+                               ) %>%
+  as_tibble(.name_repair='universal') %>%
+  rename(IMF_country=country) %>%
+  left_join(D5.2.4.COICOP.WGT) #merge CPI weights
+  
+#now calculate whether annual chain linking is used and CPI base year from scratch using this info
+D5.2.4.CPIBY.IMF.RAW <- D5.2.4.CPI.REF %>%
+  filter(!is.na(iso3c)) %>%
+  mutate(CPI_ref_period=str_sub(CPI.reference.period.review,1,4),
+         CPI_ref_period=as.numeric(CPI_ref_period),
+         CPI_weight_change=str_sub(last_change,1,4),
+         CPI_weight_change=as.numeric(CPI_weight_change)) %>%
+  mutate(RAW.D5.2.4.CPIBY.IMF=if_else((CPI_weight_change>=2019 & CPI_ref_period<2020), "annual chained",as.character(CPI_ref_period))) %>%
+  mutate(RAW.D5.2.4.CPIBY.IMF=if_else((iso3c=='AUS' | iso3c=='NZL'),"annual chained",as.character(RAW.D5.2.4.CPIBY.IMF))) #replace Australia and New Zealand as annual chain linking.  They use quarterly cpi releases and do not show up in this dataset
+  
+#score from 2010 to 2019  
+if (exists('D5.2.4.CPIBY.IMF')) {
+    rm(D5.2.4.CPIBY.IMF)
+} 
+
+for (i in c(2015:2019)) {
+  temp <- D5.2.4.CPIBY.IMF.RAW %>%
+    mutate(date=i) %>%
+    mutate(SPI.D5.2.4.CPIBY.IMF=case_when(
+      RAW.D5.2.4.CPIBY.IMF=="annual chained" ~ 1, 
+      (date-as.numeric(RAW.D5.2.4.CPIBY.IMF))<=10 ~ 1, #within 10 years of reference period
+      TRUE ~ 0 
+    )) %>%
+    select(iso3c, date, RAW.D5.2.4.CPIBY.IMF, SPI.D5.2.4.CPIBY.IMF  ) %>%
+    arrange(date, iso3c)
+  
+  if (!exists('D5.2.4.CPIBY.IMF')) {
+    D5.2.4.CPIBY.IMF <- temp
+  } else {
+    D5.2.4.CPIBY.IMF <- D5.2.4.CPIBY.IMF %>%
+      bind_rows(temp)
+  }
+  
+}
+
+
+
+#update based on IMF data.  Use manually collected value when other value not available
+D5.2.4.CPIBY <- D5.2.4.CPIBY %>%
+  full_join(D5.2.4.CPIBY.IMF) %>%
+  mutate(SPI.D5.2.4.CPIBY=if_else(is.na(SPI.D5.2.4.CPIBY),SPI.D5.2.4.CPIBY.IMF,SPI.D5.2.4.CPIBY)) %>%
+  select(-country,-SPI.D5.2.4.CPIBY.IMF) 
+
+
+spi_df <- spi_df %>%
+  left_join(D5.2.4.CPIBY) %>%
+  rename(SCI.MTHD.CPIBY=SPI.D5.2.4.CPIBY)
+
+
+```
+
+
+### External debt reporting stats   
+
+The principal sources of external debt statistics are reports submitted to the World Bank through its Debtor Reporting System by reporting countries. Data quality and coverage vary among countries and from year to year. The reporting status shows, for the latest series, whether data were used as reported (actual), data were preliminary and included an element of staff estimation (preliminary), or data are staff estimates (estimate). Score is 1 for actual and preliminary; otherwise, 0.
+
+
+
+
+```{r 3.15_debt}
+
+
+#reshape metaadata file
+D3.15.AKI <- WDI_metadata %>%
+  transmute(iso3c=if_else(is.na(Country.Code), Code, Country.Code),
+            date=date,
+            External_debt_Reporting=External.debt.Reporting.status,
+            Income.Group=Income.Group) %>%
+  mutate(SPI.D1.5.DT.TDS.DPPF.XP.ZS= case_when(
+            External_debt_Reporting=='Actual' ~ 1,
+            External_debt_Reporting=='Preliminary' ~ 1,
+            External_debt_Reporting=='Estimate' ~ 0,
+            TRUE ~ 0
+          )) %>% 
+  mutate(SPI.D1.5.DT.TDS.DPPF.XP.ZS=if_else(((Income.Group=="High income" | iso3c %in% c("WBG", "PSE")) & is.na(External_debt_Reporting)),1,SPI.D1.5.DT.TDS.DPPF.XP.ZS)) %>% #fix an issue where high income countries are not judged on their debt reporting.  Also give credit to West Bank and Gaza as they are not an IMF country
+  ungroup() %>%
+  select(iso3c, date,  contains('SPI.D1.5.DT.TDS.DPPF.XP.ZS')) 
+
+spi_df <- spi_df %>%
+  left_join(D3.15.AKI) %>%
+  rename(SCI.MTHD.DEBT=SPI.D1.5.DT.TDS.DPPF.XP.ZS)
+
+
+
+```
+
+
+### Government finance accounting   
+
+Government finance accounting concept describes the accounting basis for reporting central government financial data. For many countries government finance data have been consolidated into one set of accounts capturing all the central government's fiscal activities. Budgetary central government accounts do not necessarily include all central government units, the picture they provide of central government activities is usually incomplete. Score is 1 for consolidated accounts; otherwise, 0.
+
+
+
+```{r cgov}
+
+#read in csv file.
+D5.2.7.CGOV <- read_csv(file = paste(raw_dir, "5.2_DISM","D5.2.7.CGOV.csv", sep="/" )) %>%
+  mutate(SPI.D5.2.7.CGOV=case_when(
+    CGOV=="AC" ~ 1, 
+    CGOV=="CA" ~ 1,
+    TRUE ~ 0 
+  ),
+  RAW.D5.2.7.CGOV=CGOV)  %>%
+  select(iso3c, country, date, RAW.D5.2.7.CGOV, SPI.D5.2.7.CGOV  ) %>%
+  arrange(date, country)
+
+#####
+# IMF Data
+#####
+
+#use alternative data source provided by the IMF
+
+#read in data from IMF
+D5.2.7.CGOV.IMF <-   read_excel(path=paste(raw_dir, "5.2_DISM","2020.11.04_Compiled Data for World Bank.xlsx", sep="/" ),
+                               sheet = "5. Cntrl Gct Acct Status",
+                               skip=6
+                               ) %>%
+  as_tibble(.name_repair='universal') %>%  
+  rename(
+    IMF_code=Code,
+    IMF_country=Country,
+  ) %>%
+  mutate(SPI.D5.2.7.CGOV.IMF=case_when(
+    General.Government..consolidated.=="AC" ~ 1, 
+    General.Government..consolidated.=="CA" ~ 1,
+    TRUE ~ 0 
+  ),
+  RAW.D5.2.7.CGOV.IMF=General.Government..consolidated.) %>%
+  mutate(IMF_code=as.numeric(IMF_code)) %>%
+  left_join(imf_codes) %>%
+  select(iso3c, RAW.D5.2.7.CGOV.IMF,SPI.D5.2.7.CGOV.IMF ) %>%
+  mutate(date=2019)
+  
+  
+D5.2.7.CGOV <-  D5.2.7.CGOV %>%
+  full_join(D5.2.7.CGOV.IMF) %>%
+  mutate(SPI.D5.2.7.CGOV=if_else(is.na(SPI.D5.2.7.CGOV),SPI.D5.2.7.CGOV.IMF,SPI.D5.2.7.CGOV)) %>% #fill in with IMF data if missing.  This applies mostly to high income countries
+  select(-country,-SPI.D5.2.7.CGOV.IMF) %>%
+  arrange(date, iso3c)
+
+spi_df <- spi_df %>%
+  left_join(D5.2.7.CGOV) %>%
+  rename(SCI.MTHD.CGOV=SPI.D5.2.7.CGOV)
+
+
+```
+
+### Import and export price indexes   
+
+Import and export price indexes measure changes in the price of goods and services in international trade. They are used to deflate the value of imports and exports. Import price index is also used as an indicator of future domestic inflation. Score is 1 if the index is available monthly; otherwise, 0.
+
+### Industrial production index   
+
+Industrial production index measures changes in industrial production and is widely used for the observation and analysis of the current economic activity. Monthly survey on industrial production of index allows identifying the turning points in economic development at an early stage. Score is 1 if the index is available monthly; otherwise, 0.
+
+### National accounts base year   
+
+National accounts base year is the year used as the base period for constant price calculations in the country's national accounts. It is recommended that the base year of constant price estimates be changed periodically to reflect changes in economic structure and relative prices. Score is 1 if annual chain linking is adopted or the base year is within the last 10 years; otherwise, 0.
+
+### National immunization coverage    
+
+WHO and UNICEF collect and review data available on national immunization coverage. Then estimates on the level of immunization coverage are made by using officially reported data, survey results, scientific literature, and by taking account of potential biases and consultation with local experts. The gap between the international estimates and the government official estimates therefore suggests that the estimation method adopted by the country differs from the internationally recommended practice. Score is 1 if the government official estimate on measles vaccine coverage is consistent with the WHO/UNICEF estimate; otherwise, 0.
+
+### Special Data Dissemination Standard   
+
+The Special Data Dissemination Standard (SDDS) was established by the IMF for member countries that have or that might seek access to international capital markets, to guide them in providing their economic and financial data to the public. Although subscription is voluntary, the subscribing member needs to be committed to observing the standard and provide information about its data and data dissemination practices (metadata). The metadata are posted on the IMF's Dissemination Standards Bulletin Board. The SDDS is expected to enhance the availability of timely and comprehensive data and improve the functioning of financial markets. The score is 1 for subscribing countries; otherwise, 0.
+
+### UNESCO reporting
+
+UNESCO Institute of Statistics compiles data on education based on official responses to surveys and from reports provided by education authorities in each country. As the recommended periodicity of these data is annual, annual reporting form countries is considered a good practice. Score is 1 if the country reported at least 3 times in the last 4 years; otherwise, 0.  
+  
+## Source Data
+
+There are 5 indicators under the source data dimension:    
+  * Agricultural census   
+  * Health Survey      
+  * Population census      
+  * Poverty survey   
+  * Vital registration system complete   
+
+
+These will be recreated in turn.
+
+### Agricultural census   
+
+Agricultural censuses collect information on agricultural activities, such as agricultural land use, employment and production, and provides basic structural data and sampling frames for agricultural surveys. It is recommended that agricultural censuses be conducted at least every 10 years. Score is 1 if the country had a census at least once in the last 10 years; otherwise, 0.
+
+### Health Survey      
+
+Health surveys collect information on various aspects of health of populations, such as health expenditure, access, utilization, and outcomes. They typically include Demographic and Health Surveys, Core Welfare Indicator Questionnaire surveys, Multiple Indicator Cluster Survey, Integrated Surveys, Living Standard Measuring Surveys, Priority Surveys and other health related surveys. It is recommended that health surveys be conducted at least every 3 to 5 years. Scores are 1, 1/2 and 0 if a survey is conducted at a frequency of 3 years or less, 5 years or less and over 5 years, respectively.
+
+### Population census      
+
+Population censuses collect data on the size, distribution and composition of population and information on a broad range of social and economic characteristics of the population. They also provide sampling frames for household and other surveys. It is recommended that population censuses be conducted at least every 10 years. Score is 1 if the country had a census at least once in the last 10 years; otherwise, 0.
+
+### Poverty survey   
+
+Poverty surveys collect data on household income, consumption and expenditure, including income in kind. They typically include income, expenditure, and consumption surveys, household budget surveys, Integrated Surveys, Living Standard Measuring Surveys, and other poverty related surveys. It is recommended that poverty surveys be conducted at least every 3 to 5 years. Scores are 1, 1/2 and 0 if a survey is conducted at a frequency of 3 years or less, 5 years or less and over 5 years, respectively.
+
+### Vital registration system complete  
+
+Vital registration systems record the occurrence and characteristics of vital events pertaining to the population and serve as a main source of vital statistics. Countries with complete vital statistics registries may have more accurate and timely demographic indicators. Score is 1 if the country is judged to have complete registries of vital (birth and death) statistics by the United Nations Department of Economic and Social Information and Policy Analysis, Statistics Division; otherwise, 0.
+
+## Periodicity
+
+There are 10 indicators under the periodicity dimension:    
+  * Access to water   
+  * Child malnutrition      
+  * Child mortality         
+  * Gender equality   
+  * HIV/AIDS   
+  * Immunization   
+  * Income poverty      
+  * Maternal health         
+  * Per capita GDP growth      
+  * Primary completion   
+
+### Access to water   
+
+Access to an improved water source is currently defined as the percentage of the population that can obtain at least 20 liters per person per day from an “improved” source that is within one kilometer of the user’s dwelling. Improved water sources include household connection, public standpipe, borehole, protected well or spring, and rainwater collection, but do not include water provided through vendors, tanker trucks, unprotected wells, unprotected springs, and bottled water. Unsafe water and lack of basic sanitation is the direct cause of many water-related diseases in developing countries. This indicator monitors access to improved water sources based on the assumption that improved sources are likely to provide safer water and relates to the seventh MDG to ensure environmental sustainability. Scores are 1 and 1/2 if primary estimates are observed for at least 2 and 1 out of the 6 latest years, respectively; otherwise, 0.
+
+### Child malnutrition      
+
+Prevalence of underweight children under-five years of age, also known as prevalence of child malnutrition (weight for age), is the percentage of children under-five whose weight for age is less than minus two standard deviations from the median for the international reference population ages 0 to 59 months. The data are based on the World Health Organization’s new child growth standards released in 2006. Child malnutrition is linked to poverty, low levels of education, and poor access to health services. Sufficient and good-quality nutrition is therefore critical for development, health, and survival of current and succeeding generations. This indicator monitors nutritional status and health in populations and relates to the first MDG aiming at reducing poverty and hunger. Scores are 1, 2/3, and 1/3 if the periodicity of the indicator is 3 years or less, 5 years or less, and more than 5 years, respectively; otherwise, 0.
+
+### Child mortality         
+
+Under-five mortality rate is the probability that a newborn baby will die before reaching age five, if subject to current age-specific mortality rates. The probability is expressed as a rate per 1,000. The indicator measures child survival. Survival of a child is closely linked to the provision of primary health-care services; but poverty, malnutrition, a decline in breast-feeding, maternal education, use of improved water, and inadequacy sanitation and health facilities are all associated with high child mortality. The indicator relates to the fourth MDG calling for reducing child mortality. Score is 1 if national or international estimate is available for reference years; otherwise, 0.
+
+### Gender equality   
+
+The indicator is defined as the ratio of the gross enrollment rate of girls to boys in primary and secondary education levels in both public and private schools. Women have an enormous impact on the well-being of their families and societies, but their potential is sometimes not realized because of discriminatory social norms, incentives, and legal institutions. Although their status has improved in recent decades, gender inequalities persist. Education is one of the most important aspects of human development, and eliminating gender disparity at all levels of education would help to increase the status and capabilities of women. This indicator provides a measure of equality of educational opportunity and relates to the third MDG that seeks to promote gender equality and the empowerment of women. Scores are 1, 2/3, and 1/3 if the indicator is observed for 5, 4-3, and 2-1 out of the 5 latest years, respectively; otherwise, 0.
+
+### HIV/AIDS   
+
+HIV prevalence at any given age is the difference between the cumulative numbers of people who have become affected with HIV up to this age and the number who died, expressed as a percentage of the total number alive at this age. The basis of measuring infection is the incidence of HIV among people aged 15-49. HIV/AIDS is one of the world’s most important killers and has its greatest impact on poor countries and poor people. This indicator relates to MDG number six to combat HIV/AIDS, malaria, and other diseases. Score is 1 if a national or international estimate is available in the last 3 years; otherwise, 0.
+
+### Immunization   
+
+The proportion of one-year-old children immunized against measles is the proportion of children aged one who received one dose of measles vaccine. A child is considered adequately immunized against measles after receiving one dose of vaccine. Immunization is an essential component for reducing under-five mortality, and it serves as a proxy to measure the coverage and the quality of the child health care system.  This indicator is also related to the fourth MDG aiming at reducing child mortality. Score is 1 if the periodicity of the indicator is annual; otherwise, 0.
+
+### Income poverty      
+
+Proportion of population below US 1 dollar a day is the percentage of the population living on less than $1.08 a day at 1993 international prices. The one dollar a day poverty line is compared to consumption or income per person and includes consumption from own production and income in kind. This poverty line has fixed purchasing power across countries. This indicator measures progress toward the reduction of extreme poverty and relates to the first MDG goal to eradicate extreme poverty and hunger. Scores are 1, 2/3, and 1/3 if the periodicity of the indicator is 3 years or less, 5 years or less, and more than 5 years, respectively; otherwise, 0.
+
+### Maternal health         
+
+Births attended by skilled health staff are the percentage of deliveries attended by personnel trained to give the necessary supervision, care, and advice to women during pregnancy, labor, and the postpartum period, to conduct deliveries on their own, and to care for the newborns. High maternal mortality rates in many countries are the result of inadequate reproductive health care for women and inadequately spaced births. The indicator monitors the ability of the health system to provide good antenatal and postnatal care for women and relates to the fifth MDG aiming at improving maternal health, with a target of reducing by three-quarters, between 1990 and 2015, the maternal mortality ratio. Scores are 1, 2/3, and 1/3 if the periodicity of the indicator is 3 years or less, 5 years or less, and more than 5 years, respectively; otherwise, 0.
+
+### Per capita GDP growth      
+
+GDP per capita is the sum of gross value added by all resident producers in the economy plus any product taxes (less subsidies) not included in the valuation of output, divided by mid-year population. Growth is calculated from constant price GDP data in local currency. Sustained economic growth increases average incomes and is strongly linked to poverty reduction. GDP per capita provides a basic measure of the value of output per person, which is an indirect indicator of per capita income. Growth in GDP and GDP per capita are considered broad measures of economic growth. Scores are 1, 2/3, and 1/3 if the periodicity of the indicator is annual, 1.5 years or less, and more than 1.5 years, respectively; otherwise, 0.
+
+### Primary completion   
+
+Primary completion rate (PCR) is the number of students successfully completing the last year of (or graduating from) primary school in a given year, divided by the number of children of official graduation age in the population. Because of difficulties with developing data based on this definition, data analysis is generally based on the PCR proxy indicator which is the number of children reaching the last year of primary school (as defined by a country) net of repeaters. The indicator, which monitors education system coverage and student progression, is intended to measure human capital formation and school system quality and efficiency and relates to the second MDG to achieve universal primary education. Scores are 1, 2/3, and 1/3 if the indicator is observed for 5, 4-3, and 2-1 out of the 5 latest years, respectively; otherwise, 0.
