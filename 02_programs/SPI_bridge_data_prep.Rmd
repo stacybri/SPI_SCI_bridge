@@ -29,6 +29,11 @@ library(cld2)
 library(zoo)
 library(readxl)
 library(flextable)
+library(imfr)
+library(rvest)
+library(ggpmisc)
+library(modelr)
+
 #set directories
 dir <- here()
 
@@ -90,9 +95,10 @@ spi_mapper  <- function(data, indicator, title) {
 
   map_df <- get(data) %>%
     filter(date==max(date, na.rm=T)) %>%
-    filter(!(country %in% c('Greenland'))) %>% #drop a few countries for which we do not collect data.
-    group_by( country) %>%
-    #summarise(across(!! indicator,last)) %>%
+    # filter(!(country %in% c('Greenland'))) %>% #drop a few countries for which we do not collect data.
+    # group_by( country) %>%
+    #summarise(across(!! indicator,last)) %>%    # filter(!(country %in% c('Greenland'))) %>% #drop a few countries for which we do not collect data.
+    # group_by( country) %>%
     rename(data_available=!! indicator) %>%
     right_join(country_metadata) %>%
     mutate(data_available=if_else(is.na(data_available), as.numeric(NA), as.numeric(data_available)))    
@@ -269,6 +275,7 @@ This data is gathered from the WDI metadata.
 ```{r bpm}
 
 bpm_df <- WDI_metadata %>%
+  mutate(Country.Code=if_else(is.na(Country.Code),Code, Country.Code)) %>%
   transmute(
     iso3c=Country.Code,
     date=date,
@@ -283,6 +290,8 @@ bpm_df <- WDI_metadata %>%
 
 spi_df <- spi_df %>%
   left_join(bpm_df)
+
+spi_mapper('bpm_df','SCI.MTHD.BPM','')
 
 ```
 
@@ -381,6 +390,9 @@ spi_df <- spi_df %>%
   rename(SCI.MTHD.CPIBY=SPI.D5.2.4.CPIBY)
 
 
+spi_mapper('D5.2.4.CPIBY','SPI.D5.2.4.CPIBY','')
+
+
 ```
 
 
@@ -414,6 +426,7 @@ spi_df <- spi_df %>%
   left_join(D3.15.AKI) %>%
   rename(SCI.MTHD.DEBT=SPI.D1.5.DT.TDS.DPPF.XP.ZS)
 
+spi_mapper('D3.15.AKI','SPI.D1.5.DT.TDS.DPPF.XP.ZS','')
 
 
 ```
@@ -477,27 +490,332 @@ spi_df <- spi_df %>%
   rename(SCI.MTHD.CGOV=SPI.D5.2.7.CGOV)
 
 
+spi_mapper('D5.2.7.CGOV','SPI.D5.2.7.CGOV','')
+
+
 ```
 
 ### Import and export price indexes   
 
 Import and export price indexes measure changes in the price of goods and services in international trade. They are used to deflate the value of imports and exports. Import price index is also used as an indicator of future domestic inflation. Score is 1 if the index is available monthly; otherwise, 0.
 
+```{r iepi}
+
+# use IMF R package to access api
+
+#read in data from IMF
+iepi_df <- imf_data('IFS','PXP_IX',
+                    freq="Q") %>%
+  left_join(country_metadata) %>%
+  mutate(date_quarter=ym(year_quarter),
+         date=year(date_quarter))
+
+
+#score by year from 2015 on
+#check within a 3 year period according to what is done in SCI
+for (i in c(2015:2019)) {
+    temp_df <- iepi_df %>%
+    filter(between(date,i-8,i)) %>%
+    group_by(iso3c) %>%
+    summarise(PXP_IX=last(PXP_IX)) %>% #check for any available value by country
+    mutate(SCI.MTHD.IEPI=1,
+           date=i)
+
+    
+  assign(paste('iepi_data_',i, sep=""), temp_df)  
+}
+
+#now append together and save
+if (exists('iepi_data_df')) {
+  rm('iepi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('iepi_data_',i, sep=""))
+  
+  if (!exists('iepi_data_df')) {
+    iepi_data_df<-temp
+  } else {
+    iepi_data_df<-iepi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(iepi_data_df) %>%
+  mutate(SCI.MTHD.IEPI=if_else(!is.na(SCI.MTHD.IEPI),SCI.MTHD.IEPI,0))
+
+
+spi_mapper('spi_df','SCI.MTHD.IEPI','')
+
+
+```
+
+
 ### Industrial production index   
 
-Industrial production index measures changes in industrial production and is widely used for the observation and analysis of the current economic activity. Monthly survey on industrial production of index allows identifying the turning points in economic development at an early stage. Score is 1 if the index is available monthly; otherwise, 0.
+Industrial production index measures changes in industrial production and is widely used for the observation and analysis of the current economic activity. Monthly survey on industrial production of index allows identifying the turning points in economic development at an early stage. Score is 1 if the index is available monthly or quarterly; otherwise, 0.
+
+```{r ipi}
+
+# use IMF R package to access api
+
+#read in data from IMF
+ipi_df <- imf_data('IFS','AIP_SA_IX',
+                    freq="Q") %>%
+  left_join(country_metadata) %>%
+  mutate(date_quarter=ym(year_quarter),
+         date=year(date_quarter))
+
+
+#score by year from 2015 on
+#check within a 3 year period according to what is done in SCI
+for (i in c(2015:2019)) {
+    temp_df <- ipi_df %>%
+    filter(between(date,i-3,i)) %>%
+    group_by(iso3c) %>%
+    summarise(AIP_SA_IX=last(AIP_SA_IX)) %>% #check for any available value by country
+    mutate(SCI.MTHD.IPI=1,
+           date=i)
+
+    
+  assign(paste('ipi_data_',i, sep=""), temp_df)  
+}
+
+#now append together and save
+if (exists('ipi_data_df')) {
+  rm('ipi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('ipi_data_',i, sep=""))
+  
+  if (!exists('ipi_data_df')) {
+    ipi_data_df<-temp
+  } else {
+    ipi_data_df<-ipi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(ipi_data_df) %>%
+  mutate(SCI.MTHD.IPI=if_else(!is.na(SCI.MTHD.IPI),SCI.MTHD.IPI,0))
+
+spi_mapper('spi_df','SCI.MTHD.IPI','')
+
+
+```
+
 
 ### National accounts base year   
 
 National accounts base year is the year used as the base period for constant price calculations in the country's national accounts. It is recommended that the base year of constant price estimates be changed periodically to reflect changes in economic structure and relative prices. Score is 1 if annual chain linking is adopted or the base year is within the last 10 years; otherwise, 0.
 
+
+```{r naby}
+
+
+  
+
+D5.2.2.NABY <- df %>%
+  mutate(iso3c=if_else(is.na(Country.Code), Code, Country.Code),
+         country=Table.Name) %>%
+  select(c('iso3c', 'country', 'date',  'National.accounts.base.year')  ) %>%
+  mutate(NABY=National.accounts.base.year) %>%
+  mutate(NABY_dates=gsub("\\d{2}/","",NABY) ) %>%
+  mutate(NABY_dates=str_extract(NABY_dates, "\\d{4}") ) %>%
+  mutate(NABY_dates=if_else(NABY=="20015/2016","2016",NABY_dates)) %>% #fix an issue in WDI metadata
+  mutate(SPI.D5.2.2.NABY=case_when(
+    NABY=="Original chained constant price data are rescaled." ~ 1, 
+    (date-as.numeric(NABY_dates))<=10 ~ 1, #within 10 years of reference period
+    TRUE ~ 0 
+  ),
+  RAW.D5.2.2.NABY=NABY)  %>%
+  select(iso3c,  date, RAW.D5.2.2.NABY, SPI.D5.2.2.NABY  ) %>%
+  arrange(date)
+
+
+spi_df <- spi_df %>%
+  left_join(D5.2.2.NABY) %>%
+  rename(SCI.MTHD.NABY=SPI.D5.2.2.NABY)
+
+spi_mapper('D5.2.2.NABY','SPI.D5.2.2.NABY','')
+
+```
+
+
 ### National immunization coverage    
 
 WHO and UNICEF collect and review data available on national immunization coverage. Then estimates on the level of immunization coverage are made by using officially reported data, survey results, scientific literature, and by taking account of potential biases and consultation with local experts. The gap between the international estimates and the government official estimates therefore suggests that the estimation method adopted by the country differs from the internationally recommended practice. Score is 1 if the government official estimate on measles vaccine coverage is consistent with the WHO/UNICEF estimate; otherwise, 0.
 
+```{python eval=FALSE, include=FALSE}
+
+
+# importing the libraries
+from bs4 import BeautifulSoup
+import requests
+import pandas as pd
+
+i = "COD"
+base_url = str("https://apps.who.int/immunization_monitoring/globalsummary/countries?countrycriteria%5Bcountry%5D%5B%5D=DZA&commit=OK" + str(i))
+
+# Make a GET request to fetch the raw HTML content
+html_content = requests.get(base_url).text
+
+# Parse the html content
+soup = BeautifulSoup(html_content, "html.parser")
+print(soup.prettify()) # print the parsed data of html
+
+table = soup.find_all('table')
+table=table[1]
+table_rows = table.find_all('tr')
+
+l = []
+for tr in table_rows:
+    td = tr.find_all('td')
+    row = [tr.text for tr in td]
+    l.append(row)
+data = pd.DataFrame(l)
+
+table = soup.find_all('table')
+df = pd.read_html(str(table[1]))[0]
+
+```
+
+
+```{r immun, include=FALSE}
+# scrape from WHO website
+# Example for national data: https://apps.who.int/immunization_monitoring/globalsummary/coverages?c=COD
+# Example for estimated data: https://apps.who.int/immunization_monitoring/globalsummary/estimates?c=COD
+
+
+cnt <- "USA"
+immun_natl_html <- read_html(paste0('https://apps.who.int/immunization_monitoring/globalsummary/countries?countrycriteria%5Bcountry%5D%5B%5D=',cnt,'&commit=OK'))
+
+
+tab <- immun_natl_html %>%
+  html_elements('table.ts') %>%
+  html_nodes("left") %>%
+  html_table()
+
+tab_h <- immun_natl_html %>%
+  html_elements('table.statistics') %>%
+  html_table()
+
+finaldata <- data.frame(matrix(tab[4:427], ncol=27, byrow=TRUE))
+
+t <- data.frame(matrix(tab_h,ncol=27, byrow=TRUE))
+
+colnames(finaldata) <- t
+
+
+# put these in a character matrix -- be careful manually setting number of columns
+my_matrix <- matrix(tab, ncol = 27, byrow = T)
+
+# put these in a dataframe if you prefer that
+my_df <- data.frame(my_matrix, stringsAsFactors = F)
+
+tab<- tab[[2]]
+
+%>% 
+  html_table()
+
+  as_tibble()
+
+  //*[@id="page"]/table[2]/tbody/tr[5]/td[4]
+  
+  
+  #page > table.ts
+  url_data <- "https://ourworldindata.org/famines"
+  css_selector <- "#tablepress-73"
+
+url_data %>% 
+  read_html() %>% 
+  html_node(css = css_selector) %>% 
+  html_table() %>% 
+  as_tibble()
+
+```
+
+
+
 ### Special Data Dissemination Standard   
 
 The Special Data Dissemination Standard (SDDS) was established by the IMF for member countries that have or that might seek access to international capital markets, to guide them in providing their economic and financial data to the public. Although subscription is voluntary, the subscribing member needs to be committed to observing the standard and provide information about its data and data dissemination practices (metadata). The metadata are posted on the IMF's Dissemination Standards Bulletin Board. The SDDS is expected to enhance the availability of timely and comprehensive data and improve the functioning of financial markets. The score is 1 for subscribing countries; otherwise, 0.
+
+
+
+
+```{r idds}
+
+
+Request_metadata <- GET(url = "http://api.worldbank.org/v2/country/all/indicator/5.21.01.01.sdds?format=json&date=2004:2015&per_page=5000")
+Response_metadata <- content(Request_metadata, as = "text", encoding = "UTF-8")
+
+# Parse the JSON content and convert it to a data frame.
+D2.1_DSDR_sci <- jsonlite::fromJSON(Response_metadata, flatten = TRUE) %>%
+  data.frame() %>%
+  transmute(
+    iso3c=countryiso3code,
+    country=country.value,
+    date=as.numeric(date),
+    SDDS=if_else(is.na(value),0,as.numeric(value))
+  ) %>%
+  left_join(spi_df_empty) %>% #add on country metadata
+  filter(!is.na(income)) %>%
+  select(iso3c, country, date, SDDS  ) 
+
+
+
+#read in metadata file.
+
+#pull data for several of the standards from WDI metadata
+
+df <- WDI_metadata
+
+# Manipulate and clean final data
+df <- df %>%
+  filter(!is.na(Income.Group))  #keep just countries (drop aggregations)
+
+
+D2.1_DSDR <- df %>%
+  mutate(iso3c=if_else(is.na(Country.Code), Code, Country.Code),
+         country=Table.Name) %>%
+  select(c('iso3c', 'country', 'date',  'IMF.data.dissemination.standard')  ) %>%
+  mutate(IDDS=IMF.data.dissemination.standard) %>%
+  mutate(SPI.D2.1.GDDS=case_when(
+    IDDS=="Special Data Dissemination Standard Plus (SDDS+)" | IDDS=="Special Data Dissemination Standard (SDDS)"~ 1, 
+    IDDS=="Enhanced General Data Dissemination System (e-GDDS)"~ 0,
+    TRUE ~ 0 ),
+    SDDS=case_when(
+     IDDS=="Special Data Dissemination Standard (SDDS)"~ 1, 
+    TRUE ~ 0 ))  %>%
+  bind_rows(D2.1_DSDR_sci) %>%
+  rename(RAW.D2.1.GDDS=IDDS) %>%
+  select(iso3c,  date, RAW.D2.1.GDDS, SPI.D2.1.GDDS  ) %>%
+  left_join(country_metadata)
+
+D2.1_DSDR_map <- D2.1_DSDR 
+
+
+#spi_mapper('D2.1_DSDR_map', 'SPI.D2.1.GDDS', 'SDDS Data Standards in Place' )
+
+
+#add to spi databases
+spi_df <- spi_df %>%
+  left_join(D2.1_DSDR) %>%
+  rename(SCI.MTHD.SDDS=SPI.D2.1.GDDS)
+
+
+
+
+
+```
+
+
 
 ### UNESCO reporting
 
@@ -515,25 +833,244 @@ There are 5 indicators under the source data dimension:
 
 These will be recreated in turn.
 
-### Agricultural census   
-
-Agricultural censuses collect information on agricultural activities, such as agricultural land use, employment and production, and provides basic structural data and sampling frames for agricultural surveys. It is recommended that agricultural censuses be conducted at least every 10 years. Score is 1 if the country had a census at least once in the last 10 years; otherwise, 0.
-
-### Health Survey      
-
-Health surveys collect information on various aspects of health of populations, such as health expenditure, access, utilization, and outcomes. They typically include Demographic and Health Surveys, Core Welfare Indicator Questionnaire surveys, Multiple Indicator Cluster Survey, Integrated Surveys, Living Standard Measuring Surveys, Priority Surveys and other health related surveys. It is recommended that health surveys be conducted at least every 3 to 5 years. Scores are 1, 1/2 and 0 if a survey is conducted at a frequency of 3 years or less, 5 years or less and over 5 years, respectively.
-
 ### Population census      
 
 Population censuses collect data on the size, distribution and composition of population and information on a broad range of social and economic characteristics of the population. They also provide sampling frames for household and other surveys. It is recommended that population censuses be conducted at least every 10 years. Score is 1 if the country had a census at least once in the last 10 years; otherwise, 0.
 
+
+### Agricultural census   
+
+Agricultural censuses collect information on agricultural activities, such as agricultural land use, employment and production, and provides basic structural data and sampling frames for agricultural surveys. It is recommended that agricultural censuses be conducted at least every 10 years. Score is 1 if the country had a census at least once in the last 10 years; otherwise, 0.
+
+
+```{r pop_ag_censuses}
+
+#pull data for population and agriculture census from WDI metadata
+
+df <- WDI_metadata
+
+# Manipulate and clean final data
+df <- df %>%
+  filter(!is.na(Income.Group))  #keep just countries (drop aggregations)
+  
+
+pop_census_df <- df %>%
+  mutate(iso3c=if_else(is.na(Country.Code), Code, Country.Code),
+         country=Table.Name) %>%
+  select(c('iso3c', 'country', 'date',  'Latest.population.census')  ) %>%
+  mutate(last_val=str_extract(Latest.population.census, "\\d{4}") )%>%
+    mutate(last_val=as.numeric(last_val)) %>%
+    mutate(SCI.SRCE.PCEN=case_when(
+      (date-last_val<=10) & (date-last_val>=0) ~ 1,
+      (date-last_val<=20) & (date-last_val>=0) ~ 0,
+      TRUE ~ 0 )
+    )  %>%
+    ungroup() %>%
+    select(c('iso3c', 'country', 'date', 'Latest.population.census', 'SCI.SRCE.PCEN')  ) %>%
+    arrange(date, country)
+  
+ag_census_df <- df %>%
+  mutate(iso3c=if_else(is.na(Country.Code), Code, Country.Code),
+         country=Table.Name) %>%
+  select(c('iso3c',  'date',  'Latest.agricultural.census')  ) %>%
+  mutate(last_val=str_extract(Latest.agricultural.census, "\\d{4}") )%>%
+    mutate(last_val=as.numeric(last_val)) %>%
+    mutate(SCI.SRCE.ACEN=case_when(
+      (date-last_val<=10) & (date-last_val>=0) ~ 1,
+      (date-last_val<=20) & (date-last_val>=0) ~ 0,
+      TRUE ~ 0 )
+    )  %>%
+    ungroup() %>%
+    select(c('iso3c',  'date', 'Latest.agricultural.census', 'SCI.SRCE.ACEN')  ) %>%
+    arrange(date, iso3c)
+  
+    
+#add to spi databases
+spi_df <- spi_df %>%
+  left_join(pop_census_df) %>%
+  left_join(ag_census_df)
+
+```
+
+
+
+
+### Health Survey      
+
+Health surveys collect information on various aspects of health of populations, such as health expenditure, access, utilization, and outcomes. They typically include Demographic and Health Surveys, Core Welfare Indicator Questionnaire surveys, Multiple Indicator Cluster Survey, Integrated Surveys, Living Standard Measuring Surveys, Priority Surveys and other health related surveys. It is recommended that health surveys be conducted at least every 3 to 5 years. Scores are 1, and 1/2 if a survey is conducted at least 3 times, or 2 times respectively in the last 10 years. For assessment it will be looked at 10 year interval starting the year before current, and the number of conducted health surveys counted.
+
+
+
 ### Poverty survey   
 
-Poverty surveys collect data on household income, consumption and expenditure, including income in kind. They typically include income, expenditure, and consumption surveys, household budget surveys, Integrated Surveys, Living Standard Measuring Surveys, and other poverty related surveys. It is recommended that poverty surveys be conducted at least every 3 to 5 years. Scores are 1, 1/2 and 0 if a survey is conducted at a frequency of 3 years or less, 5 years or less and over 5 years, respectively.
+Poverty surveys collect data on household income, consumption and expenditure, including income in kind. They typically include income, expenditure, and consumption surveys, household budget surveys, Integrated Surveys, Living Standard Measuring Surveys, and other poverty related surveys. It is recommended that poverty surveys be conducted at least every 3 to 5 years. Scores are 1, and 1/2 if a survey is conducted at least 3 times, or 2 times respectively in the last 10 years. For assessment it will be looked at 10 year interval starting the year before current, and the number of conducted health surveys counted.
+
+
+
+```{r cs}
+
+
+survey_fun  <- function(data, input_var) {
+  
+  data <- data
+  input_var <- input_var
+
+  #read in csv file that was manually collected.
+  cs_df <- read_csv(file = paste(raw_dir, '/4.1_SOCS/raw/', data, "_145.csv", sep="" )) %>% #bring in data collected for an original set of 145 countries, then an additional 10, then several more high income counries.
+    bind_rows(read_csv(file = paste(raw_dir, '/4.1_SOCS/raw/', data, "_10.csv", sep="" ))) %>%
+    bind_rows(read_csv(file = paste(raw_dir, '/4.1_SOCS/raw/', data, "_high.csv", sep="" ))) %>%            
+    write_excel_csv(path = paste(raw_dir, '/4.1_SOCS/', data, "_manual.csv", sep="" )) %>%
+    distinct() %>%
+    group_by( country) %>% 
+    rename(input_var = !! input_var) %>%
+    nest() %>% # The next chunk of code will split our string with the years of the census (i.e. "2000, 2010") in to separate rows.  We will then aggregate up.
+    mutate(
+      temp_col = map(
+        data, 
+        ~ str_extract_all(.x$input_var, "\\d{4}") %>% 
+          flatten() %>% 
+          map_chr(~return(.x)) %>% 
+          as_tibble()
+      )
+    ) %>% 
+    unnest(keep_empty = TRUE) %>% # Now we have a database with the observations equal to Country*Census observations.  From here we can calculate latest census, etc.
+    mutate(indicator_date=as.numeric(value)) %>%
+    select('country','indicator_date','input_var')
+  
+  #append nada data on surveys
+  cs_df <- cs_df %>%
+    bind_rows(read_csv(file = paste(raw_dir, '/4.1_SOCS/', data, "_NADA.csv", sep="" ),
+                       col_types = list(col_character(),col_double(), col_character()))) %>%
+    group_by(country, indicator_date) %>%
+    summarise(input_var=first(na.omit(input_var)  ),
+            nada_dates=first(na.omit(nada_dates)  ) 
+             ) %>%
+  mutate(indicator_date=if_else(is.na(indicator_date),-99,indicator_date))
+    
+  
+  #Now calculate our SPI score for this indicator
+  for (i in 2015:2019) {
+   temp <- cs_df %>%
+    mutate(date=i) %>%
+    mutate(window=case_when( #extend the window for more recent years.  For instance, 2019 surveys are reported with a lag, so give them two year grace period
+      date==2019 ~ 12,
+      date==2018 ~ 11,
+      TRUE ~ 10
+    )) %>%
+    mutate(recency_indicator=((date-indicator_date<=window) & (date-indicator_date>=0)) ) %>% #restrict to surveys inside 10 year period 
+    group_by( country, date) %>% #group by country and create indicator for how many surveys over 10 year period
+    summarise(indicator=case_when(
+      sum(recency_indicator)>=3 ~ 1, 
+      sum(recency_indicator)==2 ~ 0.5, 
+      TRUE ~ 0 ),
+      input_var=paste(unique(indicator_date), collapse=", "),
+      nada_dates=first(nada_dates)) %>%
+  ungroup() %>%
+  select(c( 'country', 'date', 'input_var','nada_dates', 'indicator')  ) %>%
+  arrange(date, country)
+
+
+
+    assign(paste('temp',i,sep="_"), temp)
+  }
+
+  temp <- temp_2019
+  
+  for (i in 2015:2018) {
+    temp <- bind_rows(temp, get(paste('temp',i,sep="_")))
+  }
+  temp
+}
+
+
+
+
+#Household Survey on income/ consumption/ expenditure/ budget/ Integrated Survey
+cs4_df <-survey_fun('D4.1.4.SVY.HOUS', 'HOUS.SURVEYS') %>%
+  rename(RAW.D4.1.4.HOUS=input_var,
+         RAW.D4.1.4.HOUS.SURVEYS_nada=nada_dates,
+         SCI.SRCE.PVTY=indicator) %>%
+  select(country, date, starts_with("SCI"), starts_with("RAW"))
+
+#Health/Demographic survey
+cs7_df <-survey_fun('D4.1.7.SVY.HLTH', 'HLTH.SURVEYS') %>%
+  rename(RAW.D4.1.7.HLTH=input_var,
+         RAW.D4.1.7.HLTH.SURVEYS_nada=nada_dates,
+         SCI.SRCE.HLTH=indicator) %>%
+  select(country, date, starts_with("SCI"), starts_with("RAW"))
+
+
+#add to spi databases
+spi_df <- spi_df %>%
+  left_join(cs4_df) %>%
+  left_join(cs7_df)
+
+```
+
 
 ### Vital registration system complete  
 
 Vital registration systems record the occurrence and characteristics of vital events pertaining to the population and serve as a main source of vital statistics. Countries with complete vital statistics registries may have more accurate and timely demographic indicators. Score is 1 if the country is judged to have complete registries of vital (birth and death) statistics by the United Nations Department of Economic and Social Information and Policy Analysis, Statistics Division; otherwise, 0.
+
+
+```{r crvs}
+
+
+#read in data from UNSD database on SDGs
+df_birth <- read_csv(file=paste(raw_dir, '4.2_SOAD', 'SG_REG_BRTH90N.csv', sep="/")) %>% #Countries with birth registration data that are at least 90 percent complete (1 = YES; 0 = NO)
+  filter(date>=2015 & date<=2019) %>%
+  left_join(spi_df_empty) %>%
+  transmute(
+    iso3c=iso3c,
+    country=country,
+    date=date,
+    RAW.D4.2.3.BRTH90=ind_value,
+    SPI.D4.2.3.BRTH90=if_else(ind_value==1,0.5,0)
+  )
+
+df_death <- read_csv(file=paste(raw_dir, '4.2_SOAD', 'SG_REG_DETH75N.csv', sep="/")) %>% #Countries with death registration data that are at least 75 percent complete (1 = YES; 0 = NO)
+  filter(date>=2015& date<=2019) %>%
+  left_join(spi_df_empty) %>%
+    transmute(
+    iso3c=iso3c,
+    country=country,
+    date=date,
+    RAW.D4.2.3.DETH75=ind_value,
+    SPI.D4.2.3.DETH75=if_else(ind_value==1,0.5,0)
+  )
+
+#supplement with wdi data
+crvs_wdi <- WDI_metadata %>%
+  select(Country.Code,Code, date, Vital.registration.complete) %>%
+  mutate(iso3c=if_else(is.na(Country.Code),Code, Country.Code),
+         SPI.D4.2.3.WDI=if_else(grepl('Yes', Vital.registration.complete),1,0),
+         RAW.D4.2.3.CRVS.WDI=Vital.registration.complete) %>%
+  select(-Country.Code,-Code, -Vital.registration.complete)
+
+crvs_df <- df_birth %>%
+  left_join(df_death) %>%
+  left_join(crvs_wdi) %>%
+  mutate(
+         SPI.D4.2.3.CRVS=if_else(SPI.D4.2.3.DETH75+SPI.D4.2.3.BRTH90==1,1,0),
+         SPI.D4.2.3.CRVS=if_else(is.na(SPI.D4.2.3.CRVS),SPI.D4.2.3.WDI,SPI.D4.2.3.CRVS)) %>%
+  select(-SPI.D4.2.3.WDI) %>%
+  group_by(country) %>%
+  mutate(across(starts_with("SPI"), na.locf, na.rm=FALSE)) %>% #use carry forward to most recent value
+  mutate(across(starts_with("SPI"), ~if_else(is.na(.),0,.))) %>%
+  ungroup() %>%
+  select(c( 'country', 'date','RAW.D4.2.3.BRTH90', 'RAW.D4.2.3.DETH75', 'RAW.D4.2.3.CRVS.WDI', 'SPI.D4.2.3.CRVS')  ) 
+
+
+
+
+#add to spi databases
+spi_df <- spi_df %>%
+  left_join(crvs_df) %>%
+  rename(SCI.SRCE.CRVS=SPI.D4.2.3.CRVS)
+
+
+
+```
 
 ## Periodicity
 
@@ -553,38 +1090,780 @@ There are 10 indicators under the periodicity dimension:
 
 Access to an improved water source is currently defined as the percentage of the population that can obtain at least 20 liters per person per day from an “improved” source that is within one kilometer of the user’s dwelling. Improved water sources include household connection, public standpipe, borehole, protected well or spring, and rainwater collection, but do not include water provided through vendors, tanker trucks, unprotected wells, unprotected springs, and bottled water. Unsafe water and lack of basic sanitation is the direct cause of many water-related diseases in developing countries. This indicator monitors access to improved water sources based on the assumption that improved sources are likely to provide safer water and relates to the seventh MDG to ensure environmental sustainability. Scores are 1 and 1/2 if primary estimates are observed for at least 2 and 1 out of the 6 latest years, respectively; otherwise, 0.
 
+```{r wtr}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SH.H2O.BASW.ZS",
+                                 start_date=2005,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-6,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=2 ~ 1,
+        count==1 ~ 0.5,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.WTR=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
+
+
 ### Child malnutrition      
 
 Prevalence of underweight children under-five years of age, also known as prevalence of child malnutrition (weight for age), is the percentage of children under-five whose weight for age is less than minus two standard deviations from the median for the international reference population ages 0 to 59 months. The data are based on the World Health Organization’s new child growth standards released in 2006. Child malnutrition is linked to poverty, low levels of education, and poor access to health services. Sufficient and good-quality nutrition is therefore critical for development, health, and survival of current and succeeding generations. This indicator monitors nutritional status and health in populations and relates to the first MDG aiming at reducing poverty and hunger. Scores are 1, 2/3, and 1/3 if the periodicity of the indicator is 3 years or less, 5 years or less, and more than 5 years, respectively; otherwise, 0.
+
+```{r cmal}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SH.STA.MALN.ZS",
+                                 start_date=2005,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-10,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=3 ~ 1,
+        count==2 ~ 2/3,
+        count==1 ~ 1/3,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.CMAL=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
 
 ### Child mortality         
 
 Under-five mortality rate is the probability that a newborn baby will die before reaching age five, if subject to current age-specific mortality rates. The probability is expressed as a rate per 1,000. The indicator measures child survival. Survival of a child is closely linked to the provision of primary health-care services; but poverty, malnutrition, a decline in breast-feeding, maternal education, use of improved water, and inadequacy sanitation and health facilities are all associated with high child mortality. The indicator relates to the fourth MDG calling for reducing child mortality. Score is 1 if national or international estimate is available for reference years; otherwise, 0.
 
+```{r cmort}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SH.DYN.MORT",
+                                 start_date=2005,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-2,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=1 ~ 1,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.CMORT=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
+
 ### Gender equality   
 
 The indicator is defined as the ratio of the gross enrollment rate of girls to boys in primary and secondary education levels in both public and private schools. Women have an enormous impact on the well-being of their families and societies, but their potential is sometimes not realized because of discriminatory social norms, incentives, and legal institutions. Although their status has improved in recent decades, gender inequalities persist. Education is one of the most important aspects of human development, and eliminating gender disparity at all levels of education would help to increase the status and capabilities of women. This indicator provides a measure of equality of educational opportunity and relates to the third MDG that seeks to promote gender equality and the empowerment of women. Scores are 1, 2/3, and 1/3 if the indicator is observed for 5, 4-3, and 2-1 out of the 5 latest years, respectively; otherwise, 0.
+
+```{r gend}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SE.ENR.PRSC.FM.ZS",
+                                 start_date=2005,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-6,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=5 ~ 1,
+        count==3 | count==4 ~ 2/3,
+        count==1 | count==2 ~ 1/3,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.GEND=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
 
 ### HIV/AIDS   
 
 HIV prevalence at any given age is the difference between the cumulative numbers of people who have become affected with HIV up to this age and the number who died, expressed as a percentage of the total number alive at this age. The basis of measuring infection is the incidence of HIV among people aged 15-49. HIV/AIDS is one of the world’s most important killers and has its greatest impact on poor countries and poor people. This indicator relates to MDG number six to combat HIV/AIDS, malaria, and other diseases. Score is 1 if a national or international estimate is available in the last 3 years; otherwise, 0.
 
+```{r hiv}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SH.HIV.INCD.ZS",
+                                 start_date=2005,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-4,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=1 ~ 1,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.HIV=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
+
 ### Immunization   
 
 The proportion of one-year-old children immunized against measles is the proportion of children aged one who received one dose of measles vaccine. A child is considered adequately immunized against measles after receiving one dose of vaccine. Immunization is an essential component for reducing under-five mortality, and it serves as a proxy to measure the coverage and the quality of the child health care system.  This indicator is also related to the fourth MDG aiming at reducing child mortality. Score is 1 if the periodicity of the indicator is annual; otherwise, 0.
+
+```{r meas}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SH.IMM.MEAS",
+                                 start_date=2005,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-7,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=5 ~ 1,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.MEAS=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
 
 ### Income poverty      
 
 Proportion of population below US 1 dollar a day is the percentage of the population living on less than $1.08 a day at 1993 international prices. The one dollar a day poverty line is compared to consumption or income per person and includes consumption from own production and income in kind. This poverty line has fixed purchasing power across countries. This indicator measures progress toward the reduction of extreme poverty and relates to the first MDG goal to eradicate extreme poverty and hunger. Scores are 1, 2/3, and 1/3 if the periodicity of the indicator is 3 years or less, 5 years or less, and more than 5 years, respectively; otherwise, 0.
 
+```{r pov}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SI.POV.DDAY",
+                                 start_date=2003,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-12,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=3 ~ 1,
+        count==2 ~ 2/3,
+        count==1 ~ 1/3,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.POV=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
+
 ### Maternal health         
 
 Births attended by skilled health staff are the percentage of deliveries attended by personnel trained to give the necessary supervision, care, and advice to women during pregnancy, labor, and the postpartum period, to conduct deliveries on their own, and to care for the newborns. High maternal mortality rates in many countries are the result of inadequate reproductive health care for women and inadequately spaced births. The indicator monitors the ability of the health system to provide good antenatal and postnatal care for women and relates to the fifth MDG aiming at improving maternal health, with a target of reducing by three-quarters, between 1990 and 2015, the maternal mortality ratio. Scores are 1, 2/3, and 1/3 if the periodicity of the indicator is 3 years or less, 5 years or less, and more than 5 years, respectively; otherwise, 0.
+
+```{r}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SH.STA.BRTC.ZS",
+                                 start_date=2003,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-12,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=3 ~ 1,
+        count==2 ~ 2/3,
+        count==1 ~ 1/3,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.BTH=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
 
 ### Per capita GDP growth      
 
 GDP per capita is the sum of gross value added by all resident producers in the economy plus any product taxes (less subsidies) not included in the valuation of output, divided by mid-year population. Growth is calculated from constant price GDP data in local currency. Sustained economic growth increases average incomes and is strongly linked to poverty reduction. GDP per capita provides a basic measure of the value of output per person, which is an indirect indicator of per capita income. Growth in GDP and GDP per capita are considered broad measures of economic growth. Scores are 1, 2/3, and 1/3 if the periodicity of the indicator is annual, 1.5 years or less, and more than 1.5 years, respectively; otherwise, 0.
 
+```{r gdp}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="NY.GDP.PCAP.CD",
+                                 start_date=2003,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-12,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=10 ~ 1,
+        count>=6 & count <10 ~ 2/3,
+        count==1 & count <6 ~ 1/3,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.GDP=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
+
 ### Primary completion   
 
 Primary completion rate (PCR) is the number of students successfully completing the last year of (or graduating from) primary school in a given year, divided by the number of children of official graduation age in the population. Because of difficulties with developing data based on this definition, data analysis is generally based on the PCR proxy indicator which is the number of children reaching the last year of primary school (as defined by a country) net of repeaters. The indicator, which monitors education system coverage and student progression, is intended to measure human capital formation and school system quality and efficiency and relates to the second MDG to achieve universal primary education. Scores are 1, 2/3, and 1/3 if the indicator is observed for 5, 4-3, and 2-1 out of the 5 latest years, respectively; otherwise, 0.
+
+```{r}
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SE.PRM.CMPT.ZS",
+                                 start_date=2005,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-6,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=5 ~ 1,
+        count==4 | count==3 ~ 2/3,
+        count==1 | count==2 ~ 1/3,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.PERD.PRM=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+
+```
+
+
+## Bring all data together
+
+```{r}
+
+sci_bridge_df <- spi_df %>%
+  mutate(SCI.MTHD=rowMeans(select(spi_df, starts_with("SCI.MTHD")), na.rm=TRUE),
+         SCI.SRCE=rowMeans(select(spi_df, starts_with("SCI.SRCE")), na.rm=TRUE),
+         SCI.PERD=rowMeans(select(spi_df, starts_with("SCI.PERD")), na.rm=TRUE),
+         SCI.OVRL=(SCI.MTHD+SCI.SRCE+SCI.PERD)/3)
+  
+
+#add in SCI data
+sci_df <- wbstats::wb_data(country="all",
+             indicator=c('IQ.SCI.OVRL', #Statistical Capacity score (Overall average)
+                         'IQ.SCI.MTHD', #Methodology assessment of statistical capacity (scale 0 - 100)
+                         'IQ.SCI.PRDC', #Periodicity and timeliness assessment of statistical capacity (scale 0 - 100)
+                         'IQ.SCI.SRCE' #Source data assessment of statistical capacity (scale 0 - 100)
+                         ),
+             start_date=2016,
+             end_date=2020) %>%
+  mutate(date=as.numeric(date)-1) 
+
+comp_df <- sci_bridge_df %>%
+  left_join(sci_df)
+
+lm_data <- comp_df %>% filter(date==2019)
+
+
+#correlation overall
+cor(
+  lm_data$SCI.OVRL,
+  lm_data$IQ.SCI.OVRL,
+  use="pairwise.complete.obs"
+  )
+
+ggplot(lm_data,
+       aes(x=SCI.OVRL, y=IQ.SCI.OVRL)) +
+  geom_point()
+
+#correlation methods
+cor(
+  lm_data$SCI.MTHD,
+  lm_data$IQ.SCI.MTHD,
+  use="pairwise.complete.obs"
+  )
+
+ggplot(lm_data,
+       aes(x=SCI.MTHD, y=IQ.SCI.MTHD)) +
+  geom_point()
+
+#correlation source
+cor(
+  lm_data$SCI.SRCE,
+  lm_data$IQ.SCI.SRCE,
+  use="pairwise.complete.obs"
+  )
+
+ggplot(lm_data,
+       aes(x=SCI.SRCE, y=IQ.SCI.SRCE)) +
+  geom_point()
+
+#correlation products
+cor(
+  lm_data$SCI.PERD,
+  lm_data$IQ.SCI.PRDC,
+  use="pairwise.complete.obs"
+  )
+ggplot(lm_data,
+       aes(x=SCI.PERD, y=IQ.SCI.PRDC)) +
+  geom_point()
+
+
+```
+
+
+
+```{r lm}
+
+lm_data <- comp_df %>% filter(date==2019)
+
+model_feautures1 <- colnames(comp_df %>% select(starts_with('SCI.MTHD.')))
+model_feautures2 <- colnames(comp_df %>% select(starts_with('SCI.SRCE.')))
+model_feautures3 <- colnames(comp_df %>% select(starts_with('SCI.PERD.')))
+
+features <- append(model_feautures1, model_feautures2)
+features <- append(features, model_feautures3)
+
+
+lm_reg <- function(out, feat) {
+  #write formula
+  formula <- as.formula(
+    paste(
+      out,
+      paste(feat, collapse="+"),
+      sep="~"
+    )
+  )
+  
+  model_lm <- lm(formula, data=lm_data)
+  
+  broom::glance(model_lm)
+}
+
+ovr_reg <- lm_reg('IQ.SCI.OVRL', features)
+
+d1_reg<-lm_reg('IQ.SCI.MTHD', model_feautures1)
+d2_reg<-lm_reg('IQ.SCI.PRDC', model_feautures3)
+d3_reg<-lm_reg('IQ.SCI.SRCE', model_feautures2)
+
+
+
+```
+
+
+```{r}
+lm_plt <- function(out, feat) {
+  #write formula
+  formula <- as.formula(
+    paste(
+      out,
+      paste(feat, collapse="+"),
+      sep="~"
+    )
+  )
+  
+  model_lm <- lm(formula, data=lm_data)
+  
+  #use testing data
+  plot_df <- lm_data %>%
+    add_predictions(model_lm) %>%
+    rename(outcome=!!out)
+  
+  ggplot(plot_df, aes(x=outcome, y=pred, label=iso3c)) +
+    #geom_point() +
+    geom_text() +
+    theme_bw() +
+    xlab('2019 SCI') +
+    ylab('SPI Bridge Index') +
+    theme(legend.position = 'bottom') +
+    expand_limits(x=c(0,100),y=c(0,100)) +
+    stat_poly_eq(aes(label = paste(stat(eq.label),
+                                  stat(rr.label), sep = "*\", \"*")), 
+                       color='blue',
+                       label.x.npc = "right", label.y.npc = 0.1,
+                       formula = 'y~x', parse = TRUE, size = 4)
+  
+}
+
+
+lm_plt('IQ.SCI.OVRL', features)
+lm_plt('IQ.SCI.MTHD', model_feautures1)
+lm_plt('IQ.SCI.PRDC', model_feautures3)
+lm_plt('IQ.SCI.SRCE', model_feautures2)
+
+```
+
