@@ -686,7 +686,7 @@ df = pd.read_html(str(table[1]))[0]
 ```
 
 
-```{r immun, include=FALSE}
+```{r immun, eval=FALSE, include=FALSE}
 # scrape from WHO website
 # Example for national data: https://apps.who.int/immunization_monitoring/globalsummary/coverages?c=COD
 # Example for estimated data: https://apps.who.int/immunization_monitoring/globalsummary/estimates?c=COD
@@ -820,6 +820,64 @@ spi_df <- spi_df %>%
 ### UNESCO reporting
 
 UNESCO Institute of Statistics compiles data on education based on official responses to surveys and from reports provided by education authorities in each country. As the recommended periodicity of these data is annual, annual reporting form countries is considered a good practice. Score is 1 if the country reported at least 3 times in the last 4 years; otherwise, 0.  
+
+```{r unesco}
+
+
+#pull indicator from WDI
+ wdi_pull_df <- wbstats::wb_data(indicator="SE.PRM.ENRL",
+                                 start_date=2005,
+                                 end_date=2020,
+                                 return_wide = FALSE
+                                 )
+
+
+#score for each year
+for (i in 2015:2019) {
+  data_score_df <- wdi_pull_df %>%
+    filter(between(date,i-6,i)) %>%
+    group_by(iso3c) %>%
+    filter(!is.na(value)) %>%
+    summarise(
+      count=n()
+    ) %>%
+    mutate(
+      indicator=case_when(
+        count>=3 ~ 1,
+        TRUE ~ 0
+      ),
+      date=i) %>%
+    select(iso3c, date, indicator)
+  
+    assign(paste('data_score_',i, sep=""), data_score_df)  
+}
+
+#now append together and save
+if (exists('wdi_data_df')) {
+  rm('wdi_data_df')
+}
+for (i in c(2015:2019)) {
+  
+  temp<-get(paste('data_score_',i, sep=""))
+  
+  if (!exists('wdi_data_df')) {
+    wdi_data_df<-temp
+  } else {
+    wdi_data_df<-wdi_data_df %>%
+      bind_rows(temp) %>%
+      arrange(-date, iso3c)
+  }
+}
+
+spi_df <- spi_df %>%
+  left_join(wdi_data_df) %>%
+  mutate(SCI.MTHD.UIS=if_else(!is.na(indicator),indicator,0)) %>%
+  select(-indicator)
+
+    
+
+```
+
   
 ## Source Data
 
@@ -1824,6 +1882,14 @@ d3_reg<-lm_reg('IQ.SCI.SRCE', model_feautures2)
 
 ```
 
+```{r saver, include=FALSE}
+
+
+sci_bridge_df %>%
+  write_excel_csv(path=paste(output_dir, 'SPI_SCI_bridge_index.csv', sep="/"))
+
+
+```
 
 ```{r}
 lm_plt <- function(out, feat) {

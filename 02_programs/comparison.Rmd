@@ -1,0 +1,154 @@
+---
+title: "SCI SPI Bridge Comparison"
+author: "Brian Stacy"
+date: "7/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+
+#set directories
+dir <- here()
+
+raw_dir <- paste(dir, '01_raw_data', sep="/")
+output_dir <- paste(dir, '03_output_data', sep="/")
+
+# specify country
+cntry<-"Angola"
+```
+
+```{r data}
+
+#read in SPI
+spi_df <- read_csv(paste0(output_dir,"/SPI_index.csv"))
+
+#read in SPI SCI Bridge
+bridge_df <- read_csv(paste0(output_dir,"/SPI_SCI_bridge_index.csv")) %>%
+  select(country, iso3c, date, SCI.OVRL,SCI.MTHD, SCI.SRCE, SCI.PERD)
+
+#add in SCI data
+sci_df <- wbstats::wb_data(country="all",
+             indicator=c('IQ.SCI.OVRL', #Statistical Capacity score (Overall average)
+                         'IQ.SCI.MTHD', #Methodology assessment of statistical capacity (scale 0 - 100)
+                         'IQ.SCI.PRDC', #Periodicity and timeliness assessment of statistical capacity (scale 0 - 100)
+                         'IQ.SCI.SRCE' #Source data assessment of statistical capacity (scale 0 - 100)
+                         ),
+             start_date=2016,
+             end_date=2020)  %>%
+  mutate(date=as.numeric(date)-1) 
+
+
+comparison_df <- spi_df %>%
+  select(country, iso3c, date, region, income, population, starts_with("SPI.INDEX")) %>%
+  left_join(bridge_df) %>%
+  left_join(sci_df)
+
+```
+
+
+```{r countryplot, fig.height=6, fig.width=9}
+
+country_plot_df <- comparison_df %>%
+  filter(country==cntry) %>%
+  filter(date>2015) %>%
+  mutate(SCI.OVRL=100*SCI.OVRL) %>%
+  pivot_longer(
+    cols=c('SPI.INDEX','IQ.SCI.OVRL'),
+    names_to = 'indicator',
+    values_to =  'value'
+  ) %>%
+  mutate(Index=case_when(
+    indicator=='SPI.INDEX' ~ "SPI Overall Score",
+    indicator=='SCI.OVRL' ~ "SPI/SCI Bridge Index",
+    indicator=='IQ.SCI.OVRL' ~ "SCI Index"
+  ))
+
+
+  ggplot(country_plot_df, aes(x=date, y=value, color=Index)) +
+    geom_point() + 
+    geom_line() +
+    theme_minimal() +
+    expand_limits(y=c(0,100)) +
+    ggtitle(paste0('Comparison of Changes Over Time for SPI Overall Score, SPI/SCI Bridge, and SCI Index for ', cntry))
+
+
+
+```
+
+
+```{r changessci}
+#create a dataframe for the 2016 SPI to calculate changes since 2016
+sci_index_2019 <- sci_df %>%
+  filter(date==2019) %>%
+  filter(!is.na(IQ.SCI.OVRL))
+
+sci_index_2016 <- sci_df %>%
+  filter(date==2016) %>%
+  filter(!is.na(IQ.SCI.OVRL)) %>%
+  mutate(IQ.SCI.OVRL.2016=IQ.SCI.OVRL) %>%
+  select(iso3c, country, IQ.SCI.OVRL.2016)
+
+sci_changes <- sci_index_2019 %>%
+  mutate(IQ.SCI.OVRL.2019=IQ.SCI.OVRL) %>%
+  select(iso3c, country, IQ.SCI.OVRL.2019) %>%
+  left_join(sci_index_2016) %>%
+  mutate(changes=IQ.SCI.OVRL.2019-IQ.SCI.OVRL.2016)
+
+
+#correlation
+#corr_2020_2016 <- cor(spi_changes$SPI.INDEX.2020,spi_changes$SPI.INDEX.2016, use='pairwise.complete.obs')
+
+summary(sci_changes$changes)
+
+sci_df %>%
+  left_join(sci_index_2016) %>%
+  filter(date>=2016) %>%
+  group_by(country) %>%
+  mutate(changes=IQ.SCI.OVRL-IQ.SCI.OVRL.2016) %>%
+  ggplot(aes(x=date, y=changes, group=country)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+```
+
+```{r changes}
+#create a dataframe for the 2016 SPI to calculate changes since 2016
+spi_index_2019 <- spi_df %>%
+  filter(date==2019) %>%
+  filter(!is.na(SPI.INDEX))
+
+spi_index_2016 <- spi_df %>%
+  filter(date==2016) %>%
+  filter(!is.na(SPI.INDEX)) %>%
+  mutate(SPI.INDEX.2016=SPI.INDEX) %>%
+  select(iso3c, country, region, SPI.INDEX.2016)
+
+spi_changes <- spi_index_2019 %>%
+  mutate(SPI.INDEX.2019=SPI.INDEX) %>%
+  select(iso3c, country,region, SPI.INDEX.2019) %>%
+  left_join(spi_index_2016) %>%
+  mutate(changes=SPI.INDEX.2019-SPI.INDEX.2016)
+
+
+#correlation
+#corr_2020_2016 <- cor(spi_changes$SPI.INDEX.2020,spi_changes$SPI.INDEX.2016, use='pairwise.complete.obs')
+
+summary(spi_changes$changes)
+
+spi_df %>%
+  left_join(spi_index_2016) %>%
+  filter(date>=2016) %>%
+  mutate(changes=SPI.INDEX-SPI.INDEX.2016) %>%
+  ggplot(aes(x=date, y=changes, group=country)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+
+```
+
+

@@ -24,7 +24,7 @@
 <meta name="author" content="Brian Stacy" />
 
 
-<meta name="date" content="2021-06-21" />
+<meta name="date" content="2021-06-22" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -185,7 +185,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div id="header">
 <h1 class="title">Bridge between the SPI and the SCI</h1>
 <p class="author"><em>Brian Stacy</em></p>
-<p class="date"><em>2021-06-21</em></p>
+<p class="date"><em>2021-06-22</em></p>
 </div>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># This block of code will create a blank SPI dataset (only containing country info) that will be appended to when each indicator is added.</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># There will be two indicators added for each dimension</span></span>
@@ -465,20 +465,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   |                                                                            
   |=========================================================             |  81%
   |                                                                            
-  |===============================================================       |  90%
-  |                                                                            
   |======================================================================| 100%
 ## 
 Downloading: 980 B     
 Downloading: 980 B     
-Downloading: 5 kB     
-Downloading: 5 kB     
-Downloading: 6.4 kB     
-Downloading: 6.4 kB     
-Downloading: 23 kB     
-Downloading: 23 kB     
-Downloading: 26 kB     
-Downloading: 26 kB     
+Downloading: 2.3 kB     
+Downloading: 2.3 kB     
+Downloading: 3.7 kB     
+Downloading: 3.7 kB     
+Downloading: 20 kB     
+Downloading: 20 kB     
 Downloading: 27 kB     
 Downloading: 27 kB     
 Downloading: 28 kB     
@@ -490,11 +486,21 @@ Downloading: 28 kB
   |                                                                            
   |====                                                                  |   5%
   |                                                                            
+  |=========                                                             |  13%
+  |                                                                            
+  |==============                                                        |  20%
+  |                                                                            
+  |===================                                                   |  27%
+  |                                                                            
+  |=============================================                         |  64%
+  |                                                                            
   |==============================================                        |  66%
   |                                                                            
   |===================================================                   |  73%
   |                                                                            
-  |========================================================              |  80%
+  |=============================================================         |  88%
+  |                                                                            
+  |===================================================================   |  95%
   |                                                                            
   |======================================================================| 100%
 ## 
@@ -503,19 +509,11 @@ Downloading: 28 kB
   |                                                                            
   |===                                                                   |   4%
   |                                                                            
-  |======                                                                |   9%
-  |                                                                            
-  |==============                                                        |  20%
-  |                                                                            
-  |==================                                                    |  25%
-  |                                                                            
   |=========================                                             |  36%
-  |                                                                            
-  |=================================                                     |  47%
   |                                                                            
   |==================================                                    |  48%
   |                                                                            
-  |=========================================                             |  59%
+  |=====================================                                 |  53%
   |                                                                            
   |======================================================================| 100%
 ## 
@@ -523,8 +521,6 @@ Downloading: 28 kB
   |                                                                      |   0%
   |                                                                            
   |========================                                              |  34%
-  |                                                                            
-  |========================================================              |  79%
   |                                                                            
   |======================================================================| 100%</code></pre>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co">#score by year from 2015 on</span></span>
@@ -580,108 +576,66 @@ Downloading: 28 kB
 <pre><code>## 
 Downloading: 980 B     
 Downloading: 980 B     
-Downloading: 17 kB     
-Downloading: 17 kB     
-Downloading: 27 kB     
-Downloading: 27 kB     
-Downloading: 28 kB     
-Downloading: 28 kB     
-Downloading: 42 kB     
-Downloading: 42 kB     
-Downloading: 55 kB     
-Downloading: 55 kB     
-Downloading: 58 kB     
-Downloading: 58 kB     
-Downloading: 62 kB     
-Downloading: 62 kB     
-Downloading: 62 kB     
-Downloading: 62 kB     
-Downloading: 980 B     
-Downloading: 980 B     
-Downloading: 2.3 kB     
-Downloading: 2.3 kB     
-Downloading: 3.7 kB     
-Downloading: 3.7 kB     
-Downloading: 5 kB     
-Downloading: 5 kB     
-Downloading: 6.4 kB     
-Downloading: 6.4 kB     
-Downloading: 22 kB     
-Downloading: 22 kB     
-Downloading: 38 kB     
-Downloading: 38 kB     
-Downloading: 42 kB     
-Downloading: 42 kB     
-Downloading: 43 kB     
-Downloading: 43 kB     
-Downloading: 45 kB     
-Downloading: 45 kB     
-Downloading: 46 kB     
-Downloading: 46 kB     
-Downloading: 47 kB     
-Downloading: 47 kB     
+Downloading: 16 kB     
+Downloading: 16 kB     
+Downloading: 33 kB     
+Downloading: 33 kB     
 Downloading: 49 kB     
 Downloading: 49 kB     
-Downloading: 57 kB     
-Downloading: 57 kB     
-Downloading: 58 kB     
-Downloading: 58 kB     
-Downloading: 59 kB     
-Downloading: 59 kB     
-Downloading: 68 kB     
-Downloading: 68 kB     
-Downloading: 70 kB     
-Downloading: 70 kB     
-Downloading: 72 kB     
-Downloading: 72 kB     
-Downloading: 72 kB     
-Downloading: 72 kB     
-Downloading: 72 kB     
-Downloading: 72 kB     
-Downloading: 980 B     
-Downloading: 980 B     
-Downloading: 5 kB     
-Downloading: 5 kB     
-Downloading: 6.4 kB     
-Downloading: 6.4 kB     
+Downloading: 62 kB     
+Downloading: 62 kB     
+Downloading: 62 kB     
+Downloading: 62 kB     
+Downloading: 2.3 kB     
+Downloading: 2.3 kB     
+Downloading: 19 kB     
+Downloading: 19 kB     
 Downloading: 20 kB     
 Downloading: 20 kB     
 Downloading: 22 kB     
 Downloading: 22 kB     
-Downloading: 23 kB     
-Downloading: 23 kB     
+Downloading: 30 kB     
+Downloading: 30 kB     
+Downloading: 32 kB     
+Downloading: 32 kB     
+Downloading: 34 kB     
+Downloading: 34 kB     
+Downloading: 38 kB     
+Downloading: 38 kB     
+Downloading: 54 kB     
+Downloading: 54 kB     
+Downloading: 71 kB     
+Downloading: 71 kB     
+Downloading: 72 kB     
+Downloading: 72 kB     
+Downloading: 72 kB     
+Downloading: 72 kB     
+Downloading: 980 B     
+Downloading: 980 B     
+Downloading: 17 kB     
+Downloading: 17 kB     
 Downloading: 28 kB     
 Downloading: 28 kB     
 Downloading: 30 kB     
 Downloading: 30 kB     
-Downloading: 36 kB     
-Downloading: 36 kB     
+Downloading: 46 kB     
+Downloading: 46 kB     
 Downloading: 47 kB     
 Downloading: 47 kB     
 Downloading: 47 kB     
 Downloading: 47 kB     
 Downloading: 980 B     
 Downloading: 980 B     
-Downloading: 14 kB     
-Downloading: 14 kB     
-Downloading: 15 kB     
-Downloading: 15 kB     
-Downloading: 16 kB     
-Downloading: 16 kB     
-Downloading: 20 kB     
-Downloading: 20 kB     
-Downloading: 23 kB     
-Downloading: 23 kB     
-Downloading: 26 kB     
-Downloading: 26 kB     
+Downloading: 17 kB     
+Downloading: 17 kB     
 Downloading: 28 kB     
 Downloading: 28 kB     
+Downloading: 30 kB     
+Downloading: 30 kB     
 Downloading: 31 kB     
 Downloading: 31 kB     
-Downloading: 32 kB     
-Downloading: 32 kB     
-Downloading: 45 kB     
-Downloading: 45 kB     
+Downloading: 47 kB     
+Downloading: 47 kB     
 Downloading: 52 kB     
 Downloading: 52 kB     
 Downloading: 52 kB     
@@ -759,78 +713,119 @@ Downloading: 52 kB
 <div id="national-immunization-coverage" class="section level3" number="0.2.8">
 <h3><span class="header-section-number">0.2.8</span> National immunization coverage</h3>
 <p>WHO and UNICEF collect and review data available on national immunization coverage. Then estimates on the level of immunization coverage are made by using officially reported data, survey results, scientific literature, and by taking account of potential biases and consultation with local experts. The gap between the international estimates and the government official estimates therefore suggests that the estimation method adopted by the country differs from the internationally recommended practice. Score is 1 if the government official estimate on measles vaccine coverage is consistent with the WHO/UNICEF estimate; otherwise, 0.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># scrape from WHO website</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Example for national data: https://apps.who.int/immunization_monitoring/globalsummary/coverages?c=COD</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Example for estimated data: https://apps.who.int/immunization_monitoring/globalsummary/estimates?c=COD</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>cnt <span class="ot">&lt;-</span> <span class="st">&quot;COD&quot;</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>immun_natl_html <span class="ot">&lt;-</span> <span class="fu">read_html</span>(<span class="fu">paste0</span>(<span class="st">&#39;https://apps.who.int/immunization_monitoring/globalsummary/coverages?c=&#39;</span>,cnt))</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> immun_natl_html </span></code></pre></div>
 </div>
 <div id="special-data-dissemination-standard" class="section level3" number="0.2.9">
 <h3><span class="header-section-number">0.2.9</span> Special Data Dissemination Standard</h3>
 <p>The Special Data Dissemination Standard (SDDS) was established by the IMF for member countries that have or that might seek access to international capital markets, to guide them in providing their economic and financial data to the public. Although subscription is voluntary, the subscribing member needs to be committed to observing the standard and provide information about its data and data dissemination practices (metadata). The metadata are posted on the IMF’s Dissemination Standards Bulletin Board. The SDDS is expected to enhance the availability of timely and comprehensive data and improve the functioning of financial markets. The score is 1 for subscribing countries; otherwise, 0.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>Request_metadata <span class="ot">&lt;-</span> <span class="fu">GET</span>(<span class="at">url =</span> <span class="st">&quot;http://api.worldbank.org/v2/country/all/indicator/5.21.01.01.sdds?format=json&amp;date=2004:2015&amp;per_page=5000&quot;</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>Response_metadata <span class="ot">&lt;-</span> <span class="fu">content</span>(Request_metadata, <span class="at">as =</span> <span class="st">&quot;text&quot;</span>, <span class="at">encoding =</span> <span class="st">&quot;UTF-8&quot;</span>)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Parse the JSON content and convert it to a data frame.</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>D2<span class="fl">.1</span>_DSDR_sci <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">fromJSON</span>(Response_metadata, <span class="at">flatten =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">iso3c=</span>countryiso3code,</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">country=</span>country.value,</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">date=</span><span class="fu">as.numeric</span>(date),</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">SDDS=</span><span class="fu">if_else</span>(<span class="fu">is.na</span>(value),<span class="dv">0</span>,<span class="fu">as.numeric</span>(value))</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(spi_df_empty) <span class="sc">%&gt;%</span> <span class="co">#add on country metadata</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(income)) <span class="sc">%&gt;%</span></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(iso3c, country, date, SDDS  ) </span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="co">#read in metadata file.</span></span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="co">#pull data for several of the standards from WDI metadata</span></span>
-<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> WDI_metadata</span>
-<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Manipulate and clean final data</span></span>
-<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Income.Group))  <span class="co">#keep just countries (drop aggregations)</span></span>
-<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>D2<span class="fl">.1</span>_DSDR <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">iso3c=</span><span class="fu">if_else</span>(<span class="fu">is.na</span>(Country.Code), Code, Country.Code),</span>
-<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>         <span class="at">country=</span>Table.Name) <span class="sc">%&gt;%</span></span>
-<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="st">&#39;iso3c&#39;</span>, <span class="st">&#39;country&#39;</span>, <span class="st">&#39;date&#39;</span>,  <span class="st">&#39;IMF.data.dissemination.standard&#39;</span>)  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">IDDS=</span>IMF.data.dissemination.standard) <span class="sc">%&gt;%</span></span>
-<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SPI.D2.1.GDDS=</span><span class="fu">case_when</span>(</span>
-<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>    IDDS<span class="sc">==</span><span class="st">&quot;Special Data Dissemination Standard Plus (SDDS+)&quot;</span> <span class="sc">|</span> IDDS<span class="sc">==</span><span class="st">&quot;Special Data Dissemination Standard (SDDS)&quot;</span><span class="sc">~</span> <span class="dv">1</span>, </span>
-<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>    IDDS<span class="sc">==</span><span class="st">&quot;Enhanced General Data Dissemination System (e-GDDS)&quot;</span><span class="sc">~</span> <span class="dv">0</span>,</span>
-<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span> ),</span>
-<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">SDDS=</span><span class="fu">case_when</span>(</span>
-<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>     IDDS<span class="sc">==</span><span class="st">&quot;Special Data Dissemination Standard (SDDS)&quot;</span><span class="sc">~</span> <span class="dv">1</span>, </span>
-<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span> ))  <span class="sc">%&gt;%</span></span>
-<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(D2<span class="fl">.1</span>_DSDR_sci) <span class="sc">%&gt;%</span></span>
-<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">RAW.D2.1.GDDS=</span>IDDS) <span class="sc">%&gt;%</span></span>
-<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(iso3c,  date, RAW.D2.<span class="fl">1.</span>GDDS, SPI.D2.<span class="fl">1.</span>GDDS  ) <span class="sc">%&gt;%</span></span>
-<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(country_metadata)</span>
-<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>D2<span class="fl">.1</span>_DSDR_map <span class="ot">&lt;-</span> D2<span class="fl">.1</span>_DSDR </span>
-<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a><span class="co">#spi_mapper(&#39;D2.1_DSDR_map&#39;, &#39;SPI.D2.1.GDDS&#39;, &#39;SDDS Data Standards in Place&#39; )</span></span>
-<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a><span class="co">#add to spi databases</span></span>
-<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a>spi_df <span class="ot">&lt;-</span> spi_df <span class="sc">%&gt;%</span></span>
-<span id="cb16-55"><a href="#cb16-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(D2<span class="fl">.1</span>_DSDR) <span class="sc">%&gt;%</span></span>
-<span id="cb16-56"><a href="#cb16-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SCI.MTHD.SDDS=</span>SPI.D2.<span class="fl">1.</span>GDDS)</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>Request_metadata <span class="ot">&lt;-</span> <span class="fu">GET</span>(<span class="at">url =</span> <span class="st">&quot;http://api.worldbank.org/v2/country/all/indicator/5.21.01.01.sdds?format=json&amp;date=2004:2015&amp;per_page=5000&quot;</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>Response_metadata <span class="ot">&lt;-</span> <span class="fu">content</span>(Request_metadata, <span class="at">as =</span> <span class="st">&quot;text&quot;</span>, <span class="at">encoding =</span> <span class="st">&quot;UTF-8&quot;</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Parse the JSON content and convert it to a data frame.</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>D2<span class="fl">.1</span>_DSDR_sci <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">fromJSON</span>(Response_metadata, <span class="at">flatten =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">iso3c=</span>countryiso3code,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">country=</span>country.value,</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">date=</span><span class="fu">as.numeric</span>(date),</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">SDDS=</span><span class="fu">if_else</span>(<span class="fu">is.na</span>(value),<span class="dv">0</span>,<span class="fu">as.numeric</span>(value))</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(spi_df_empty) <span class="sc">%&gt;%</span> <span class="co">#add on country metadata</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(income)) <span class="sc">%&gt;%</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(iso3c, country, date, SDDS  ) </span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="co">#read in metadata file.</span></span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a><span class="co">#pull data for several of the standards from WDI metadata</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> WDI_metadata</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Manipulate and clean final data</span></span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Income.Group))  <span class="co">#keep just countries (drop aggregations)</span></span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>D2<span class="fl">.1</span>_DSDR <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">iso3c=</span><span class="fu">if_else</span>(<span class="fu">is.na</span>(Country.Code), Code, Country.Code),</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>         <span class="at">country=</span>Table.Name) <span class="sc">%&gt;%</span></span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="st">&#39;iso3c&#39;</span>, <span class="st">&#39;country&#39;</span>, <span class="st">&#39;date&#39;</span>,  <span class="st">&#39;IMF.data.dissemination.standard&#39;</span>)  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">IDDS=</span>IMF.data.dissemination.standard) <span class="sc">%&gt;%</span></span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SPI.D2.1.GDDS=</span><span class="fu">case_when</span>(</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a>    IDDS<span class="sc">==</span><span class="st">&quot;Special Data Dissemination Standard Plus (SDDS+)&quot;</span> <span class="sc">|</span> IDDS<span class="sc">==</span><span class="st">&quot;Special Data Dissemination Standard (SDDS)&quot;</span><span class="sc">~</span> <span class="dv">1</span>, </span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>    IDDS<span class="sc">==</span><span class="st">&quot;Enhanced General Data Dissemination System (e-GDDS)&quot;</span><span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span> ),</span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">SDDS=</span><span class="fu">case_when</span>(</span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>     IDDS<span class="sc">==</span><span class="st">&quot;Special Data Dissemination Standard (SDDS)&quot;</span><span class="sc">~</span> <span class="dv">1</span>, </span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span> ))  <span class="sc">%&gt;%</span></span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(D2<span class="fl">.1</span>_DSDR_sci) <span class="sc">%&gt;%</span></span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">RAW.D2.1.GDDS=</span>IDDS) <span class="sc">%&gt;%</span></span>
+<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(iso3c,  date, RAW.D2.<span class="fl">1.</span>GDDS, SPI.D2.<span class="fl">1.</span>GDDS  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(country_metadata)</span>
+<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a>D2<span class="fl">.1</span>_DSDR_map <span class="ot">&lt;-</span> D2<span class="fl">.1</span>_DSDR </span>
+<span id="cb15-48"><a href="#cb15-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-49"><a href="#cb15-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-50"><a href="#cb15-50" aria-hidden="true" tabindex="-1"></a><span class="co">#spi_mapper(&#39;D2.1_DSDR_map&#39;, &#39;SPI.D2.1.GDDS&#39;, &#39;SDDS Data Standards in Place&#39; )</span></span>
+<span id="cb15-51"><a href="#cb15-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-52"><a href="#cb15-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-53"><a href="#cb15-53" aria-hidden="true" tabindex="-1"></a><span class="co">#add to spi databases</span></span>
+<span id="cb15-54"><a href="#cb15-54" aria-hidden="true" tabindex="-1"></a>spi_df <span class="ot">&lt;-</span> spi_df <span class="sc">%&gt;%</span></span>
+<span id="cb15-55"><a href="#cb15-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(D2<span class="fl">.1</span>_DSDR) <span class="sc">%&gt;%</span></span>
+<span id="cb15-56"><a href="#cb15-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SCI.MTHD.SDDS=</span>SPI.D2.<span class="fl">1.</span>GDDS)</span></code></pre></div>
 </div>
 <div id="unesco-reporting" class="section level3" number="0.2.10">
 <h3><span class="header-section-number">0.2.10</span> UNESCO reporting</h3>
 <p>UNESCO Institute of Statistics compiles data on education based on official responses to surveys and from reports provided by education authorities in each country. As the recommended periodicity of these data is annual, annual reporting form countries is considered a good practice. Score is 1 if the country reported at least 3 times in the last 4 years; otherwise, 0.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">#pull indicator from WDI</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a> wdi_pull_df <span class="ot">&lt;-</span> wbstats<span class="sc">::</span><span class="fu">wb_data</span>(<span class="at">indicator=</span><span class="st">&quot;SE.PRM.ENRL&quot;</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">start_date=</span><span class="dv">2005</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">end_date=</span><span class="dv">2020</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>                                 <span class="at">return_wide =</span> <span class="cn">FALSE</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>                                 )</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co">#score for each year</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2015</span><span class="sc">:</span><span class="dv">2019</span>) {</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  data_score_df <span class="ot">&lt;-</span> wdi_pull_df <span class="sc">%&gt;%</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">between</span>(date,i<span class="dv">-6</span>,i)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(iso3c) <span class="sc">%&gt;%</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">count=</span><span class="fu">n</span>()</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">indicator=</span><span class="fu">case_when</span>(</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>        count<span class="sc">&gt;=</span><span class="dv">3</span> <span class="sc">~</span> <span class="dv">1</span>,</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>        <span class="cn">TRUE</span> <span class="sc">~</span> <span class="dv">0</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">date=</span>i) <span class="sc">%&gt;%</span></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(iso3c, date, indicator)</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assign</span>(<span class="fu">paste</span>(<span class="st">&#39;data_score_&#39;</span>,i, <span class="at">sep=</span><span class="st">&quot;&quot;</span>), data_score_df)  </span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a><span class="co">#now append together and save</span></span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">exists</span>(<span class="st">&#39;wdi_data_df&#39;</span>)) {</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rm</span>(<span class="st">&#39;wdi_data_df&#39;</span>)</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">c</span>(<span class="dv">2015</span><span class="sc">:</span><span class="dv">2019</span>)) {</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  temp<span class="ot">&lt;-</span><span class="fu">get</span>(<span class="fu">paste</span>(<span class="st">&#39;data_score_&#39;</span>,i, <span class="at">sep=</span><span class="st">&quot;&quot;</span>))</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">exists</span>(<span class="st">&#39;wdi_data_df&#39;</span>)) {</span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>    wdi_data_df<span class="ot">&lt;-</span>temp</span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    wdi_data_df<span class="ot">&lt;-</span>wdi_data_df <span class="sc">%&gt;%</span></span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bind_rows</span>(temp) <span class="sc">%&gt;%</span></span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">arrange</span>(<span class="sc">-</span>date, iso3c)</span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>spi_df <span class="ot">&lt;-</span> spi_df <span class="sc">%&gt;%</span></span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(wdi_data_df) <span class="sc">%&gt;%</span></span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SCI.MTHD.UIS=</span><span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(indicator),indicator,<span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>indicator)</span></code></pre></div>
 </div>
 </div>
 <div id="source-data" class="section level2" number="0.3">
@@ -1624,8 +1619,8 @@ Downloading: 52 kB
 <span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>                         <span class="st">&#39;IQ.SCI.SRCE&#39;</span> <span class="co">#Source data assessment of statistical capacity (scale 0 - 100)</span></span>
 <span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>                         ),</span>
 <span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>             <span class="at">start_date=</span><span class="dv">2016</span>,</span>
-<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>             <span class="at">end_date=</span><span class="dv">2019</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">date=</span><span class="fu">as.numeric</span>(date)) </span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>             <span class="at">end_date=</span><span class="dv">2020</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">date=</span><span class="fu">as.numeric</span>(date)<span class="sc">-</span><span class="dv">1</span>) </span>
 <span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>comp_df <span class="ot">&lt;-</span> sci_bridge_df <span class="sc">%&gt;%</span></span>
 <span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(sci_df)</span>
@@ -1639,44 +1634,44 @@ Downloading: 52 kB
 <span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>  lm_data<span class="sc">$</span>IQ.SCI.OVRL,</span>
 <span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">use=</span><span class="st">&quot;pairwise.complete.obs&quot;</span></span>
 <span id="cb30-30"><a href="#cb30-30" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
-<pre><code>## [1] 0.9121044</code></pre>
+<pre><code>## [1] 0.9251917</code></pre>
 <div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lm_data,</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x=</span>SCI.OVRL, <span class="at">y=</span>IQ.SCI.OVRL)) <span class="sc">+</span></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span></code></pre></div>
-<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-3-1.png" width="960" /></p>
+<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-4-1.png" width="960" /></p>
 <div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co">#correlation methods</span></span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  lm_data<span class="sc">$</span>SCI.MTHD,</span>
 <span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  lm_data<span class="sc">$</span>IQ.SCI.MTHD,</span>
 <span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">use=</span><span class="st">&quot;pairwise.complete.obs&quot;</span></span>
 <span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
-<pre><code>## [1] 0.8924777</code></pre>
+<pre><code>## [1] 0.8851731</code></pre>
 <div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lm_data,</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x=</span>SCI.MTHD, <span class="at">y=</span>IQ.SCI.MTHD)) <span class="sc">+</span></span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span></code></pre></div>
-<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-3-2.png" width="960" /></p>
+<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-4-2.png" width="960" /></p>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co">#correlation source</span></span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  lm_data<span class="sc">$</span>SCI.SRCE,</span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  lm_data<span class="sc">$</span>IQ.SCI.SRCE,</span>
 <span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">use=</span><span class="st">&quot;pairwise.complete.obs&quot;</span></span>
 <span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
-<pre><code>## [1] 0.7435144</code></pre>
+<pre><code>## [1] 0.8226292</code></pre>
 <div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lm_data,</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x=</span>SCI.SRCE, <span class="at">y=</span>IQ.SCI.SRCE)) <span class="sc">+</span></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span></code></pre></div>
-<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-3-3.png" width="960" /></p>
+<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-4-3.png" width="960" /></p>
 <div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co">#correlation products</span></span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cor</span>(</span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  lm_data<span class="sc">$</span>SCI.PERD,</span>
 <span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  lm_data<span class="sc">$</span>IQ.SCI.PRDC,</span>
 <span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">use=</span><span class="st">&quot;pairwise.complete.obs&quot;</span></span>
 <span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div>
-<pre><code>## [1] 0.8811383</code></pre>
+<pre><code>## [1] 0.9570644</code></pre>
 <div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lm_data,</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x=</span>SCI.PERD, <span class="at">y=</span>IQ.SCI.PRDC)) <span class="sc">+</span></span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>()</span></code></pre></div>
-<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-3-4.png" width="960" /></p>
+<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-4-4.png" width="960" /></p>
 <div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>lm_data <span class="ot">&lt;-</span> comp_df <span class="sc">%&gt;%</span> <span class="fu">filter</span>(date<span class="sc">==</span><span class="dv">2019</span>)</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>model_feautures1 <span class="ot">&lt;-</span> <span class="fu">colnames</span>(comp_df <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">&#39;SCI.MTHD.&#39;</span>)))</span>
@@ -1707,6 +1702,48 @@ Downloading: 52 kB
 <span id="cb42-28"><a href="#cb42-28" aria-hidden="true" tabindex="-1"></a>d1_reg<span class="ot">&lt;-</span><span class="fu">lm_reg</span>(<span class="st">&#39;IQ.SCI.MTHD&#39;</span>, model_feautures1)</span>
 <span id="cb42-29"><a href="#cb42-29" aria-hidden="true" tabindex="-1"></a>d2_reg<span class="ot">&lt;-</span><span class="fu">lm_reg</span>(<span class="st">&#39;IQ.SCI.PRDC&#39;</span>, model_feautures3)</span>
 <span id="cb42-30"><a href="#cb42-30" aria-hidden="true" tabindex="-1"></a>d3_reg<span class="ot">&lt;-</span><span class="fu">lm_reg</span>(<span class="st">&#39;IQ.SCI.SRCE&#39;</span>, model_feautures2)</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>lm_plt <span class="ot">&lt;-</span> <span class="cf">function</span>(out, feat) {</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">#write formula</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  formula <span class="ot">&lt;-</span> <span class="fu">as.formula</span>(</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste</span>(</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>      out,</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(feat, <span class="at">collapse=</span><span class="st">&quot;+&quot;</span>),</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>      <span class="at">sep=</span><span class="st">&quot;~&quot;</span></span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>  model_lm <span class="ot">&lt;-</span> <span class="fu">lm</span>(formula, <span class="at">data=</span>lm_data)</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>  <span class="co">#use testing data</span></span>
+<span id="cb43-14"><a href="#cb43-14" aria-hidden="true" tabindex="-1"></a>  plot_df <span class="ot">&lt;-</span> lm_data <span class="sc">%&gt;%</span></span>
+<span id="cb43-15"><a href="#cb43-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">add_predictions</span>(model_lm) <span class="sc">%&gt;%</span></span>
+<span id="cb43-16"><a href="#cb43-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">outcome=</span><span class="sc">!!</span>out)</span>
+<span id="cb43-17"><a href="#cb43-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb43-18"><a href="#cb43-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(plot_df, <span class="fu">aes</span>(<span class="at">x=</span>outcome, <span class="at">y=</span>pred, <span class="at">label=</span>iso3c)) <span class="sc">+</span></span>
+<span id="cb43-19"><a href="#cb43-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">#geom_point() +</span></span>
+<span id="cb43-20"><a href="#cb43-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_text</span>() <span class="sc">+</span></span>
+<span id="cb43-21"><a href="#cb43-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb43-22"><a href="#cb43-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">xlab</span>(<span class="st">&#39;2019 SCI&#39;</span>) <span class="sc">+</span></span>
+<span id="cb43-23"><a href="#cb43-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ylab</span>(<span class="st">&#39;SPI Bridge Index&#39;</span>) <span class="sc">+</span></span>
+<span id="cb43-24"><a href="#cb43-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&#39;bottom&#39;</span>) <span class="sc">+</span></span>
+<span id="cb43-25"><a href="#cb43-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">expand_limits</span>(<span class="at">x=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">100</span>),<span class="at">y=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">100</span>)) <span class="sc">+</span></span>
+<span id="cb43-26"><a href="#cb43-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">stat_poly_eq</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste</span>(<span class="fu">stat</span>(eq.label),</span>
+<span id="cb43-27"><a href="#cb43-27" aria-hidden="true" tabindex="-1"></a>                                  <span class="fu">stat</span>(rr.label), <span class="at">sep =</span> <span class="st">&quot;*</span><span class="sc">\&quot;</span><span class="st">, </span><span class="sc">\&quot;</span><span class="st">*&quot;</span>)), </span>
+<span id="cb43-28"><a href="#cb43-28" aria-hidden="true" tabindex="-1"></a>                       <span class="at">color=</span><span class="st">&#39;blue&#39;</span>,</span>
+<span id="cb43-29"><a href="#cb43-29" aria-hidden="true" tabindex="-1"></a>                       <span class="at">label.x.npc =</span> <span class="st">&quot;right&quot;</span>, <span class="at">label.y.npc =</span> <span class="fl">0.1</span>,</span>
+<span id="cb43-30"><a href="#cb43-30" aria-hidden="true" tabindex="-1"></a>                       <span class="at">formula =</span> <span class="st">&#39;y~x&#39;</span>, <span class="at">parse =</span> <span class="cn">TRUE</span>, <span class="at">size =</span> <span class="dv">4</span>)</span>
+<span id="cb43-31"><a href="#cb43-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb43-32"><a href="#cb43-32" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb43-33"><a href="#cb43-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-34"><a href="#cb43-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-35"><a href="#cb43-35" aria-hidden="true" tabindex="-1"></a><span class="fu">lm_plt</span>(<span class="st">&#39;IQ.SCI.OVRL&#39;</span>, features)</span></code></pre></div>
+<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-5-1.png" width="960" /></p>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">lm_plt</span>(<span class="st">&#39;IQ.SCI.MTHD&#39;</span>, model_feautures1)</span></code></pre></div>
+<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-5-2.png" width="960" /></p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">lm_plt</span>(<span class="st">&#39;IQ.SCI.PRDC&#39;</span>, model_feautures3)</span></code></pre></div>
+<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-5-3.png" width="960" /></p>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">lm_plt</span>(<span class="st">&#39;IQ.SCI.SRCE&#39;</span>, model_feautures2)</span></code></pre></div>
+<p><img src="SPI_bridge_data_prep_files/figure-html/unnamed-chunk-5-4.png" width="960" /></p>
 </div>
             </section>
 
