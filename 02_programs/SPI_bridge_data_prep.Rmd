@@ -53,7 +53,7 @@ window=5 #set the window for the moving averages
 # 2. An indicator with the raw (unscored) values of the indicators
 # The unit for this database will be country*year
 
-span <- c(2015:2019)
+span <- c(2015:2020)
 
 spi_df_empty <- bind_rows(replicate(length(span), wbstats::wbcountries(), simplify = FALSE), .id='date') %>%
   mutate(date=as.numeric(date)+span[1]-1) %>%
@@ -123,7 +123,7 @@ spi_mapper  <- function(data, indicator, title) {
     theme_map(base_size=12) +
     labs(
       title=str_wrap(title,100),
-      subtitle= 'Data Point is for last year available (usually 2019)',
+      subtitle= 'Data Point is for last year available (usually 2020)',
       caption = 'Source: SPI Indicator.',
       fill='SPI Indicator Value'
     )
@@ -140,7 +140,7 @@ spi_mapper  <- function(data, indicator, title) {
       labs(
       title=str_wrap(paste(title, 'By Region', sep=" - "),100),
       caption = 'Source: SPI Indicators Raw Data',
-      subtitle= 'Data Point is for last year available (usually 2019)'
+      subtitle= 'Data Point is for last year available (usually 2020)'
       ) +
       expand_limits(x=c(0,100)) +
       theme_bw()
@@ -157,7 +157,7 @@ spi_mapper  <- function(data, indicator, title) {
       labs(
       title=str_wrap(paste(title, 'By Income', sep=" - "),100),
       caption = 'Source: SPI Indicators Raw Data',
-      subtitle= 'Data Point is for last year available (usually 2019)'
+      subtitle= 'Data Point is for last year available (usually 2020)'
       ) +
       expand_limits(x=c(0,100)) +
       theme_bw()
@@ -241,7 +241,7 @@ These will be recreated in turn.
 # pull in some WDI metadata which will be used for constructing AKI indicators.
 # WDI metadata was gathered using previous vintages of WDI from 2016-19
 # Metadata was gathered and saved as csv files in the 011_data folder
-for (i in 2016:2019) {
+for (i in 2016:2020) {
   temp <- read_csv(file = paste(raw_dir, "/metadata/WDI_metadata_",i,".csv", sep="" )) %>%
     as_tibble(.name_repair='universal') %>%
     mutate(National.accounts.reference.year=as.numeric(National.accounts.reference.year),
@@ -249,7 +249,7 @@ for (i in 2016:2019) {
   
     assign(paste("WDI_metadata",i,sep="_"), temp)
 }
-WDI_metadata <- bind_rows(WDI_metadata_2016, WDI_metadata_2017, WDI_metadata_2018, WDI_metadata_2019)
+WDI_metadata <- bind_rows(WDI_metadata_2016, WDI_metadata_2017, WDI_metadata_2018, WDI_metadata_2019, WDI_metadata_2020)
 ```
 
 ```{r standards_meta}
@@ -302,11 +302,14 @@ Consumer Price Index serves as indicators of inflation and reflects changes in t
 
 ```{r cpiby}
 
+
 #read in csv file.
 D5.2.4.CPIBY <- read_csv(file = paste(raw_dir, "5.2_DISM","D5.2.4.CPIBY.csv", sep="/" )) %>%
+  bind_rows(read_csv(file = paste(raw_dir, "5.2_DISM","D5.2.4.CPIBY.2020.csv", sep="/" ))) %>% # add in 2020 data
   mutate(SPI.D5.2.4.CPIBY=case_when(
-    CPIBY=="annual chained" ~ 1, 
-    (date-as.numeric(CPIBY))<=10 ~ 1, #within 10 years of reference period
+    str_to_lower(CPIBY)=="annual chained" ~ 1, 
+    str_to_lower(CPIBY)=="annually chained" ~ 1, 
+    (date-as.numeric(CPIBY))<=10 ~ 0.5, #within 10 years of reference period
     TRUE ~ 0 
   ),
   RAW.D5.2.4.CPIBY=CPIBY)  %>%
@@ -348,20 +351,20 @@ D5.2.4.CPIBY.IMF.RAW <- D5.2.4.CPI.REF %>%
          CPI_ref_period=as.numeric(CPI_ref_period),
          CPI_weight_change=str_sub(last_change,1,4),
          CPI_weight_change=as.numeric(CPI_weight_change)) %>%
-  mutate(RAW.D5.2.4.CPIBY.IMF=if_else((CPI_weight_change>=2019 & CPI_ref_period<2020), "annual chained",as.character(CPI_ref_period))) %>%
+  mutate(RAW.D5.2.4.CPIBY.IMF=if_else((CPI_weight_change>=2020 & CPI_ref_period<2021), "annual chained",as.character(CPI_ref_period))) %>%
   mutate(RAW.D5.2.4.CPIBY.IMF=if_else((iso3c=='AUS' | iso3c=='NZL'),"annual chained",as.character(RAW.D5.2.4.CPIBY.IMF))) #replace Australia and New Zealand as annual chain linking.  They use quarterly cpi releases and do not show up in this dataset
   
-#score from 2010 to 2019  
+#score from 2010 to 2020  
 if (exists('D5.2.4.CPIBY.IMF')) {
     rm(D5.2.4.CPIBY.IMF)
 } 
 
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   temp <- D5.2.4.CPIBY.IMF.RAW %>%
     mutate(date=i) %>%
     mutate(SPI.D5.2.4.CPIBY.IMF=case_when(
       RAW.D5.2.4.CPIBY.IMF=="annual chained" ~ 1, 
-      (date-as.numeric(RAW.D5.2.4.CPIBY.IMF))<=10 ~ 1, #within 10 years of reference period
+      (date-as.numeric(RAW.D5.2.4.CPIBY.IMF))<=10 ~ 0.5, #within 10 years of reference period
       TRUE ~ 0 
     )) %>%
     select(iso3c, date, RAW.D5.2.4.CPIBY.IMF, SPI.D5.2.4.CPIBY.IMF  ) %>%
@@ -383,6 +386,7 @@ D5.2.4.CPIBY <- D5.2.4.CPIBY %>%
   full_join(D5.2.4.CPIBY.IMF) %>%
   mutate(SPI.D5.2.4.CPIBY=if_else(is.na(SPI.D5.2.4.CPIBY),SPI.D5.2.4.CPIBY.IMF,SPI.D5.2.4.CPIBY)) %>%
   select(-country,-SPI.D5.2.4.CPIBY.IMF) 
+
 
 
 spi_df <- spi_df %>%
@@ -442,6 +446,7 @@ Government finance accounting concept describes the accounting basis for reporti
 
 #read in csv file.
 D5.2.7.CGOV <- read_csv(file = paste(raw_dir, "5.2_DISM","D5.2.7.CGOV.csv", sep="/" )) %>%
+  bind_rows(read_csv(file = paste(raw_dir, "5.2_DISM","D5.2.7.CGOV.2020.csv", sep="/" ))) %>% #add in 2020 data
   mutate(SPI.D5.2.7.CGOV=case_when(
     CGOV=="AC" ~ 1, 
     CGOV=="CA" ~ 1,
@@ -450,6 +455,7 @@ D5.2.7.CGOV <- read_csv(file = paste(raw_dir, "5.2_DISM","D5.2.7.CGOV.csv", sep=
   RAW.D5.2.7.CGOV=CGOV)  %>%
   select(iso3c, country, date, RAW.D5.2.7.CGOV, SPI.D5.2.7.CGOV  ) %>%
   arrange(date, country)
+
 
 #####
 # IMF Data
@@ -476,7 +482,7 @@ D5.2.7.CGOV.IMF <-   read_excel(path=paste(raw_dir, "5.2_DISM","2020.11.04_Compi
   mutate(IMF_code=as.numeric(IMF_code)) %>%
   left_join(imf_codes) %>%
   select(iso3c, RAW.D5.2.7.CGOV.IMF,SPI.D5.2.7.CGOV.IMF ) %>%
-  mutate(date=2019)
+  mutate(date=2020)
   
   
 D5.2.7.CGOV <-  D5.2.7.CGOV %>%
@@ -484,6 +490,7 @@ D5.2.7.CGOV <-  D5.2.7.CGOV %>%
   mutate(SPI.D5.2.7.CGOV=if_else(is.na(SPI.D5.2.7.CGOV),SPI.D5.2.7.CGOV.IMF,SPI.D5.2.7.CGOV)) %>% #fill in with IMF data if missing.  This applies mostly to high income countries
   select(-country,-SPI.D5.2.7.CGOV.IMF) %>%
   arrange(date, iso3c)
+
 
 spi_df <- spi_df %>%
   left_join(D5.2.7.CGOV) %>%
@@ -513,7 +520,7 @@ iepi_df <- imf_data('IFS','PXP_IX',
 
 #score by year from 2015 on
 #check within a 3 year period according to what is done in SCI
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
     temp_df <- iepi_df %>%
     filter(between(date,i-8,i)) %>%
     group_by(iso3c) %>%
@@ -529,7 +536,7 @@ for (i in c(2015:2019)) {
 if (exists('iepi_data_df')) {
   rm('iepi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('iepi_data_',i, sep=""))
   
@@ -571,7 +578,7 @@ ipi_df <- imf_data('IFS','AIP_SA_IX',
 
 #score by year from 2015 on
 #check within a 3 year period according to what is done in SCI
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
     temp_df <- ipi_df %>%
     filter(between(date,i-3,i)) %>%
     group_by(iso3c) %>%
@@ -587,7 +594,7 @@ for (i in c(2015:2019)) {
 if (exists('ipi_data_df')) {
   rm('ipi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('ipi_data_',i, sep=""))
   
@@ -619,8 +626,9 @@ National accounts base year is the year used as the base period for constant pri
 
 
   
+  
 
-D5.2.2.NABY <- df %>%
+ df %>%
   mutate(iso3c=if_else(is.na(Country.Code), Code, Country.Code),
          country=Table.Name) %>%
   select(c('iso3c', 'country', 'date',  'National.accounts.base.year')  ) %>%
@@ -628,6 +636,11 @@ D5.2.2.NABY <- df %>%
   mutate(NABY_dates=gsub("\\d{2}/","",NABY) ) %>%
   mutate(NABY_dates=str_extract(NABY_dates, "\\d{4}") ) %>%
   mutate(NABY_dates=if_else(NABY=="20015/2016","2016",NABY_dates)) %>% #fix an issue in WDI metadata
+  arrange(iso3c,date) %>%
+  write_excel_csv(paste(raw_dir, "5.2_DISM","D5.2.2.NABY_raw_metadata.csv", sep="/" )) 
+
+
+D5.2.2.NABY <- read_csv(paste(raw_dir, "5.2_DISM","D5.2.2.NABY.2020.csv", sep="/" )) %>%
   mutate(SPI.D5.2.2.NABY=case_when(
     NABY=="Original chained constant price data are rescaled." ~ 1, 
     (date-as.numeric(NABY_dates))<=10 ~ 1, #within 10 years of reference period
@@ -636,6 +649,7 @@ D5.2.2.NABY <- df %>%
   RAW.D5.2.2.NABY=NABY)  %>%
   select(iso3c,  date, RAW.D5.2.2.NABY, SPI.D5.2.2.NABY  ) %>%
   arrange(date)
+
 
 
 spi_df <- spi_df %>%
@@ -833,7 +847,7 @@ UNESCO Institute of Statistics compiles data on education based on official resp
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-6,i)) %>%
     group_by(iso3c) %>%
@@ -856,7 +870,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -968,15 +982,15 @@ Poverty surveys collect data on household income, consumption and expenditure, i
 ```{r cs}
 
 
+
+
 survey_fun  <- function(data, input_var) {
   
   data <- data
   input_var <- input_var
 
   #read in csv file that was manually collected.
-  cs_df <- read_csv(file = paste(raw_dir, '/4.1_SOCS/raw/', data, "_145.csv", sep="" )) %>% #bring in data collected for an original set of 145 countries, then an additional 10, then several more high income counries.
-    bind_rows(read_csv(file = paste(raw_dir, '/4.1_SOCS/raw/', data, "_10.csv", sep="" ))) %>%
-    bind_rows(read_csv(file = paste(raw_dir, '/4.1_SOCS/raw/', data, "_high.csv", sep="" ))) %>%            
+  cs_df <- read_csv(file = paste(raw_dir, '/4.1_SOCS/raw/', data, ".2020.csv", sep="" )) %>%        #add in 2020 manual data    
     write_excel_csv(path = paste(raw_dir, '/4.1_SOCS/', data, "_manual.csv", sep="" )) %>%
     distinct() %>%
     group_by( country) %>% 
@@ -986,7 +1000,7 @@ survey_fun  <- function(data, input_var) {
       temp_col = map(
         data, 
         ~ str_extract_all(.x$input_var, "\\d{4}") %>% 
-          flatten() %>% 
+          flatten_chr() %>% 
           map_chr(~return(.x)) %>% 
           as_tibble()
       )
@@ -1007,19 +1021,19 @@ survey_fun  <- function(data, input_var) {
     
   
   #Now calculate our SPI score for this indicator
-  for (i in 2015:2019) {
+  for (i in 2004:2020) {
    temp <- cs_df %>%
     mutate(date=i) %>%
     mutate(window=case_when( #extend the window for more recent years.  For instance, 2019 surveys are reported with a lag, so give them two year grace period
-      date==2019 ~ 12,
-      date==2018 ~ 11,
+      date==2020 ~ 12,
+      date==2019 ~ 11,
       TRUE ~ 10
     )) %>%
     mutate(recency_indicator=((date-indicator_date<=window) & (date-indicator_date>=0)) ) %>% #restrict to surveys inside 10 year period 
     group_by( country, date) %>% #group by country and create indicator for how many surveys over 10 year period
     summarise(indicator=case_when(
       sum(recency_indicator)>=3 ~ 1, 
-      sum(recency_indicator)==2 ~ 0.5, 
+      sum(recency_indicator)==2 ~ .5, 
       TRUE ~ 0 ),
       input_var=paste(unique(indicator_date), collapse=", "),
       nada_dates=first(nada_dates)) %>%
@@ -1032,9 +1046,9 @@ survey_fun  <- function(data, input_var) {
     assign(paste('temp',i,sep="_"), temp)
   }
 
-  temp <- temp_2019
+  temp <- temp_2020
   
-  for (i in 2015:2018) {
+  for (i in 2004:2019) {
     temp <- bind_rows(temp, get(paste('temp',i,sep="_")))
   }
   temp
@@ -1076,7 +1090,7 @@ Vital registration systems record the occurrence and characteristics of vital ev
 
 #read in data from UNSD database on SDGs
 df_birth <- read_csv(file=paste(raw_dir, '4.2_SOAD', 'SG_REG_BRTH90N.csv', sep="/")) %>% #Countries with birth registration data that are at least 90 percent complete (1 = YES; 0 = NO)
-  filter(date>=2015 & date<=2019) %>%
+  filter(date>=2015 & date<=2020) %>%
   left_join(spi_df_empty) %>%
   transmute(
     iso3c=iso3c,
@@ -1087,7 +1101,7 @@ df_birth <- read_csv(file=paste(raw_dir, '4.2_SOAD', 'SG_REG_BRTH90N.csv', sep="
   )
 
 df_death <- read_csv(file=paste(raw_dir, '4.2_SOAD', 'SG_REG_DETH75N.csv', sep="/")) %>% #Countries with death registration data that are at least 75 percent complete (1 = YES; 0 = NO)
-  filter(date>=2015& date<=2019) %>%
+  filter(date>=2015& date<=2020) %>%
   left_join(spi_df_empty) %>%
     transmute(
     iso3c=iso3c,
@@ -1159,7 +1173,7 @@ Access to an improved water source is currently defined as the percentage of the
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-6,i)) %>%
     group_by(iso3c) %>%
@@ -1183,7 +1197,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1222,7 +1236,7 @@ Prevalence of underweight children under-five years of age, also known as preval
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-10,i)) %>%
     group_by(iso3c) %>%
@@ -1247,7 +1261,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1285,7 +1299,7 @@ Under-five mortality rate is the probability that a newborn baby will die before
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-2,i)) %>%
     group_by(iso3c) %>%
@@ -1308,7 +1322,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1346,7 +1360,7 @@ The indicator is defined as the ratio of the gross enrollment rate of girls to b
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-6,i)) %>%
     group_by(iso3c) %>%
@@ -1371,7 +1385,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1409,7 +1423,7 @@ HIV prevalence at any given age is the difference between the cumulative numbers
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-4,i)) %>%
     group_by(iso3c) %>%
@@ -1432,7 +1446,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1470,7 +1484,7 @@ The proportion of one-year-old children immunized against measles is the proport
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-7,i)) %>%
     group_by(iso3c) %>%
@@ -1493,7 +1507,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1531,7 +1545,7 @@ Proportion of population below US 1 dollar a day is the percentage of the popula
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-12,i)) %>%
     group_by(iso3c) %>%
@@ -1556,7 +1570,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1594,7 +1608,7 @@ Births attended by skilled health staff are the percentage of deliveries attende
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-12,i)) %>%
     group_by(iso3c) %>%
@@ -1619,7 +1633,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1657,7 +1671,7 @@ GDP per capita is the sum of gross value added by all resident producers in the 
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-12,i)) %>%
     group_by(iso3c) %>%
@@ -1682,7 +1696,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1720,7 +1734,7 @@ Primary completion rate (PCR) is the number of students successfully completing 
 
 
 #score for each year
-for (i in 2015:2019) {
+for (i in 2015:2020) {
   data_score_df <- wdi_pull_df %>%
     filter(between(date,i-6,i)) %>%
     group_by(iso3c) %>%
@@ -1745,7 +1759,7 @@ for (i in 2015:2019) {
 if (exists('wdi_data_df')) {
   rm('wdi_data_df')
 }
-for (i in c(2015:2019)) {
+for (i in c(2015:2020)) {
   
   temp<-get(paste('data_score_',i, sep=""))
   
@@ -1774,9 +1788,9 @@ spi_df <- spi_df %>%
 ```{r}
 
 sci_bridge_df <- spi_df %>%
-  mutate(SCI.MTHD=rowMeans(select(spi_df, starts_with("SCI.MTHD")), na.rm=TRUE),
-         SCI.SRCE=rowMeans(select(spi_df, starts_with("SCI.SRCE")), na.rm=TRUE),
-         SCI.PERD=rowMeans(select(spi_df, starts_with("SCI.PERD")), na.rm=TRUE),
+  mutate(SCI.MTHD=rowMeans(select(spi_df, starts_with("SCI.MTHD")), na.rm=FALSE),
+         SCI.SRCE=rowMeans(select(spi_df, starts_with("SCI.SRCE")), na.rm=FALSE),
+         SCI.PERD=rowMeans(select(spi_df, starts_with("SCI.PERD")), na.rm=FALSE),
          SCI.OVRL=(SCI.MTHD+SCI.SRCE+SCI.PERD)/3)
   
 
@@ -1794,7 +1808,7 @@ sci_df <- wbstats::wb_data(country="all",
 comp_df <- sci_bridge_df %>%
   left_join(sci_df)
 
-lm_data <- comp_df %>% filter(date==2019)
+lm_data <- comp_df %>% filter(date==2020)
 
 
 #correlation overall
@@ -1847,7 +1861,7 @@ ggplot(lm_data,
 
 ```{r lm}
 
-lm_data <- comp_df %>% filter(date==2019)
+lm_data <- comp_df %>% filter(date==2020)
 
 model_feautures1 <- colnames(comp_df %>% select(starts_with('SCI.MTHD.')))
 model_feautures2 <- colnames(comp_df %>% select(starts_with('SCI.SRCE.')))
@@ -1913,7 +1927,7 @@ lm_plt <- function(out, feat) {
     #geom_point() +
     geom_text() +
     theme_bw() +
-    xlab('2019 SCI') +
+    xlab('2020 SCI') +
     ylab('SPI Bridge Index') +
     theme(legend.position = 'bottom') +
     expand_limits(x=c(0,100),y=c(0,100)) +
